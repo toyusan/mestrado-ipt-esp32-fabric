@@ -1,4 +1,4 @@
-/*
+/**
 *************************************************************************
 * @file			wifi_app.c
 * @brief		Source file for the wifi_app.c module.
@@ -13,19 +13,20 @@
 */
 
 /* Includes -------------------------------------------------------------*/
+#include "sysconfig.h"
 
 // FreeRTOS Includes
-#include "esp_event.h"
-#include "esp_interface.h"
-#include "esp_netif_types.h"
-#include "esp_wifi_default.h"
-#include "esp_wifi_types.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/idf_additions.h"
 #include "freertos/task.h"
 
 // ESP Includes
+#include "esp_event.h"
+#include "esp_interface.h"
+#include "esp_netif_types.h"
+#include "esp_wifi_default.h"
+#include "esp_wifi_types.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -44,6 +45,12 @@
 
 // Tag used for ESP serial console msgs
 static const char TAG [] = "wifi_app"; 
+
+// Used for returning the WiFi configuration
+wifi_config_t *wifi_config = NULL;
+
+// Used to track the number for retries when a connection attempt fails
+static int g_retry_number;
 
 // Queue handle used to manipulate the main queue of events
 static QueueHandle_t wifi_app_queue_handle;
@@ -83,7 +90,17 @@ static void wifi_app_event_handler(void* arg_data, esp_event_base_t event_base, 
  * Initializes the WiFi access point settings and assigns the static IP to the SoftAP.
  */
 static void wifi_app_soft_ap_config(void); 
- 
+
+/**
+ * Initializes the WiFi sta settings.
+ */
+static void wifi_app_soft_sta_config(void);
+
+/**
+ * Connects the ESP32 to an external AP using the updated station configuration
+ */
+static void wifi_app_connect_sta(void);
+
 /* Public Functions ------------------------------------------------------*/ 
 /**
  * @defgroup wifi_app.c Public Functions
@@ -112,13 +129,64 @@ BaseType_t wifi_app_send_message(wifi_app_message_e msgID){
 	 
 	 // Disable default WiFi logging message
 	 esp_log_level_set("wifi", ESP_LOG_NONE);
-	 
+
+	 // Allocate memory for the wifi configuration
+	 wifi_config = (wifi_config_t*)malloc(sizeof(wifi_config_t));
+	 memset(wifi_config, 0x00, sizeof(wifi_config_t));
+		 
 	 // Create message queue
 	 wifi_app_queue_handle = xQueueCreate(3, sizeof(wifi_app_queue_message_t));
 	 
 	 // Start the WiFi application task
 	 xTaskCreatePinnedToCore(&wifi_app_task, "wifi_app_task", WIFI_APP_TASK_STACK_SIZE, NULL, WIFI_APP_TASK_PRIORITY, NULL, WIFI_APP_TASK_CORE_ID);
- }
+}
+
+/**
+ * Initializes the WiFi sta settings.
+ */
+static void wifi_app_soft_sta_config(void){
+	char *ssid_str = NULL, *pass_str = NULL;
+	size_t len_ssid = 0, len_pass = 0;
+	
+	// Get SSID header
+	len_ssid = strlen(PERSONAL_SSID)+ 1;
+	if (len_ssid > 1){
+		ssid_str = malloc(len_ssid);
+		strcpy(ssid_str, PERSONAL_SSID);
+		printf("ssid_str %s len_ssid %d\n", ssid_str, len_ssid);
+	}
+	
+	// Get Password header
+	len_pass = strlen(PERSONAL_PASS)+ 1;
+	if (len_pass > 1){
+		pass_str = malloc(len_pass);
+		strcpy(pass_str, PERSONAL_PASS);
+		printf("pass_str %s len_pass %d\n", pass_str, len_pass);
+	}
+	
+    // Update the Wifi networks configuration and let the wifi application know
+	wifi_config_t* wifi_config = wifi_app_get_wifi_config();
+	memset(wifi_config, 0x00, sizeof(wifi_config_t));
+	memcpy(wifi_config->sta.ssid, ssid_str, len_ssid);
+	memcpy(wifi_config->sta.password, pass_str, len_pass);
+	printf("Connect to  %s - %s\n", wifi_config->sta.ssid, wifi_config->sta.password);
+	wifi_app_send_message(WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER);
+}
+
+/**
+ * Connects the ESP32 to an external AP using the updated station configuration
+ */
+static void wifi_app_connect_sta(void){
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_app_get_wifi_config()));
+	ESP_ERROR_CHECK(esp_wifi_connect());
+}
+
+/**
+ * Gets the wifi configuration
+ */
+wifi_config_t* wifi_app_get_wifi_config(void){
+	return wifi_config;
+}
 
 /** @} */
 
@@ -149,7 +217,9 @@ static void wifi_app_task(void *pvParameters){
 	ESP_ERROR_CHECK(esp_wifi_start());
 	
 	// Send firts message
-	wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
+	//wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
+	
+	wifi_app_soft_sta_config();
 	
 	while(1){
 		if(xQueueReceive(wifi_app_queue_handle, &msg, portMAX_DELAY)){
@@ -162,12 +232,26 @@ static void wifi_app_task(void *pvParameters){
 				
 				case WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER");
+				// Attempt a connection
+				wifi_app_connect_sta();
+
+				// Set current number of retries to zero
+				g_retry_number = 0;
+				
+				// Let the HTTP server know about the connection attempt
+				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_INIT);
 				break;
 				
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
 				// led_wifi_connected();
+				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_SUCCESS);
 				break;
+
+				case WIFI_APP_MSG_STA_DISCONNECTED:
+				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
+				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_FAIL);
+				break;			
 				
 				default:
 				break;
@@ -228,6 +312,16 @@ static void wifi_app_event_handler_init(void){
 			 
 			 case WIFI_EVENT_STA_DISCONNECTED:
 			 ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
+			 wifi_event_sta_disconnected_t *wifi_event_sta_disconnected = (wifi_event_sta_disconnected_t*)malloc(sizeof(wifi_event_sta_disconnected_t));
+			 *wifi_event_sta_disconnected = *((wifi_event_sta_disconnected_t*)event_data);
+			 printf("WIFI_EVENT_STA_DISCONNECTED, reason code %d\n", wifi_event_sta_disconnected->reason);
+			 if (g_retry_number < MAX_CONNECTION_RETRIES){
+				 esp_wifi_connect();
+				 g_retry_number ++;
+			 }
+			 else{
+				 wifi_app_send_message(WIFI_APP_MSG_STA_DISCONNECTED);
+			 }
 			 break;
 		 }
 	 }
@@ -235,6 +329,7 @@ static void wifi_app_event_handler_init(void){
 		 switch(event_id){
 			 case IP_EVENT_STA_GOT_IP:
 			 ESP_LOGI(TAG,"IP_EVENT_STA_GOT_IP");
+			 wifi_app_send_message(WIFI_APP_MSG_STA_CONNECTED_GOT_IP);
 			 break;
 		 }
 	 }

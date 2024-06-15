@@ -1,4 +1,4 @@
-/*
+/**
 *******************************************************************************
 * @file			wifi_app.h
 * @brief		Header file for the wifi_app.h module.
@@ -21,14 +21,18 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "esp_netif.h"
+#include "esp_wifi_types.h"
 
 /* Public Macros -------------------------------------------------------------*/
 
 /* Public Types --------------------------------------------------------------*/
 
+// Callback typedef
+typedef void (*wifi_connected_event_callback_t)(void);
+
 // WiFi application settings
 #define WIFI_AP_SSID				"ESP32_AP"		// AP Name
-#define WIFI_AP_PASSWORD			"password"			// AP Password
+#define WIFI_AP_PASSWORD			"password"		// AP Password
 #define WIFI_AP_CHANNEL				1				// AP Channel
 #define WIFI_AP_SSID_HIDDEN			0				// AP Visibility
 #define WIFI_AP_MAX_CONNECTIONS		5				// AP Max clients
@@ -40,7 +44,7 @@ extern "C" {
 #define WIFI_AP_STA_POWER_SAVE		WIFI_PS_NONE	// Power save not used
 #define MAX_SSID_LENGTH				32				// IEEE standard maximum
 #define MAX_PASSWORD_LENGTH			64				// IEEE standard maximum
-#define MAX_CONNECTIONS_RETRIES		5				// Retry number on disconect
+#define MAX_CONNECTION_RETRIES		5				// Retry number on disconect
 
 // netif object for the station and access point
 extern esp_netif_t* esp_netif_sta;
@@ -54,6 +58,9 @@ typedef enum wifi_app_message{
 	 WIFI_APP_MSG_START_HTTP_SERVER = 0,
 	 WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER,
 	 WIFI_APP_MSG_STA_CONNECTED_GOT_IP,
+	 WIFI_APP_MSG_USER_REQUESTED_STA_DISCONNECT,
+	 WIFI_APP_MSG_LOAD_SAVED_CREDENTIALS,
+	 WIFI_APP_MSG_STA_DISCONNECTED,
 } wifi_app_message_e;
 
 /**
@@ -81,8 +88,29 @@ BaseType_t wifi_app_send_message(wifi_app_message_e msgID);
 /**
  * @brief Starts the WiFi RTOS task
  */
- void wifi_app_start (void);
+void wifi_app_start (void);
+
+/**
+ * Gets the wifi configuration
+ */
+wifi_config_t* wifi_app_get_wifi_config(void);
  
+/**
+ * Sets the callback function.
+ */
+void wifi_app_set_callback(wifi_connected_event_callback_t cb);
+
+/**
+ * Calls the callback function.
+ */
+void wifi_app_call_callback(void);
+
+/**
+ * Gets the RSSI value of the Wifi connection.
+ * @return current RSSI level.
+ */
+int8_t wifi_app_get_rssi(void);
+
 /** @} */
 
 #ifdef __cplusplus
