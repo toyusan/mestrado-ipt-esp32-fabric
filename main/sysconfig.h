@@ -26,6 +26,22 @@ extern "C" {
 #define PERSONAL_SSID "Apto 172"
 #define PERSONAL_PASS "30082023"
 
+// HTTPS Server definitions
+#define HTTPS_SERVER_URL " https://18.230.239.105"
+#define HTTPS_SERVER_PORT 3000
+
+//Server certifies
+extern const char server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const char server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+
+//Client certifies
+extern const char client_cert_pem_start[] asm("_binary_device_cert_pem_start");
+extern const char client_cert_pem_end[] asm("_binary_device_cert_pem_end");
+
+// Client private key 
+extern const char client_key_pem_start[] asm("_binary_device_key_pem_start");
+extern const char client_key_pem_end[] asm("_binary_device_key_pem_end");
+
 /* Public Function Prototypes -------------------------------------------------*/
 /**
  * @defgroup sysconfig.h Public Functions

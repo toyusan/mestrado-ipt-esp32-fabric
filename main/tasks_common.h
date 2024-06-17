@@ -29,6 +29,10 @@ extern "C" {
 #define WIFI_APP_TASK_PRIORITY			5
 #define WIFI_APP_TASK_CORE_ID			0
 
+// HTTPS application task
+#define HTTPS_APP_TASK_STACK_SIZE		8192
+#define HTTPS_APP_TASK_PRIORITY			5
+
 /* Public Function Prototypes -------------------------------------------------*/
 /**
  * @defgroup tasks_common.h Public Functions
