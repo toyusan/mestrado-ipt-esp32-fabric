@@ -36,6 +36,7 @@
 #include "portmacro.h"
 #include "tasks_common.h"
 #include "wifi_app.h"
+#include "https_app.h"
 
 /* Definitions ----------------------------------------------------------*/
 
@@ -170,7 +171,7 @@ static void wifi_app_soft_sta_config(void){
 	memcpy(wifi_config->sta.ssid, ssid_str, len_ssid);
 	memcpy(wifi_config->sta.password, pass_str, len_pass);
 	printf("Connect to  %s - %s\n", wifi_config->sta.ssid, wifi_config->sta.password);
-	wifi_app_send_message(WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER);
+	wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 }
 
 /**
@@ -216,41 +217,38 @@ static void wifi_app_task(void *pvParameters){
 	// Start WiFi
 	ESP_ERROR_CHECK(esp_wifi_start());
 	
-	// Send firts message
-	//wifi_app_send_message(WIFI_APP_MSG_START_HTTP_SERVER);
-	
+	// Connect to the WiFi Network
 	wifi_app_soft_sta_config();
 	
 	while(1){
 		if(xQueueReceive(wifi_app_queue_handle, &msg, portMAX_DELAY)){
 			switch(msg.msgID){
-				case WIFI_APP_MSG_START_HTTP_SERVER:
-				ESP_LOGI(TAG, "WIFI_APP_MSG_START_HTTP_SERVER");
-				// http_server_start();
-				// led_http_server_started();
-				break;
-				
-				case WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER:
-				ESP_LOGI(TAG, "WIFI_APP_MSG_CONNECTING_FROM_HTTP_SERVER");
+				case WIFI_APP_MSG_CONNECTING_STA:
+				ESP_LOGI(TAG, "WIFI_APP_MSG_CONNECTING_STA");
 				// Attempt a connection
 				wifi_app_connect_sta();
 
 				// Set current number of retries to zero
 				g_retry_number = 0;
-				
-				// Let the HTTP server know about the connection attempt
-				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_INIT);
 				break;
 				
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
-				// led_wifi_connected();
-				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_SUCCESS);
+				
+				// Enviar uma mensagem de teste para a fila HTTPS
+    			const char *test_url = "https://18.230.239.105:3000/register-device";
+    			const char *test_payload = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
+    			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
+
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
-				//http_server_monitor_send_message(HTTP_MSG_WIFI_CONNECT_FAIL);
+				// Attempt a connection
+				wifi_app_connect_sta();
+
+				// Set current number of retries to zero
+				g_retry_number = 0;
 				break;			
 				
 				default:
