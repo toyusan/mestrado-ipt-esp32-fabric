@@ -36,6 +36,7 @@
 #include "portmacro.h"
 #include "tasks_common.h"
 #include "wifi_app.h"
+#include "https_app.h"
 
 /* Definitions ----------------------------------------------------------*/
 
@@ -233,10 +234,21 @@ static void wifi_app_task(void *pvParameters){
 				
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
+				
+				// Enviar uma mensagem de teste para a fila HTTPS
+    			const char *test_url = "https://18.230.239.105:3000/register-device";
+    			const char *test_payload = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
+    			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
+
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
+				// Attempt a connection
+				wifi_app_connect_sta();
+
+				// Set current number of retries to zero
+				g_retry_number = 0;
 				break;			
 				
 				default:

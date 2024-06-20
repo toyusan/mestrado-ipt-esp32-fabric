@@ -25,6 +25,7 @@
 
 // Application Includes
 #include "wifi_app.h"
+#include "https_app.h"
 
 /* Definitions ----------------------------------------------------------*/
 
@@ -53,6 +54,9 @@ void app_main(void){
 	
 	// Start WiFi
 	wifi_app_start();
+	
+	// Start HTTPS
+	https_app_start();
 }
 
 /** @} */

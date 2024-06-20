@@ -31,8 +31,8 @@ extern "C" {
 #define HTTPS_SERVER_PORT 3000
 
 //Server certifies
-extern const char server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const char server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+extern const char ca_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const char ca_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 //Client certifies
 extern const char client_cert_pem_start[] asm("_binary_device_cert_pem_start");

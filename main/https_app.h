@@ -31,6 +31,8 @@ extern "C" {
  */
 typedef enum https_app_message {
     HTTPS_APP_MSG_SEND_REQUEST = 0,
+    HTTPS_APP_MSG_RECEIVE_RESPONSE,
+    HTTPS_APP_MSG_DOWNLOAD_IPFS
 } https_app_message_e;
 
 /**
@@ -41,6 +43,8 @@ typedef struct https_app_queue_message {
     https_app_message_e msgID;
     const char *url;
     const char *payload;
+    int response_code;
+    const char *response_message;
 } https_app_queue_message_t;
 
 /* Public Function Prototypes -------------------------------------------------*/
@@ -54,7 +58,7 @@ typedef struct https_app_queue_message {
  * @param msgID Message ID from the https_app_message_e enum
  * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFALSE
  */
-BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, const char *payload);
+BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, const char *payload, int response_code, const char* response_message);
 
 /**
  * @brief Starts the HTTPS RTOS task
