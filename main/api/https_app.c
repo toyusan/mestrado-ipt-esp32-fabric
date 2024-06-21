@@ -195,7 +195,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_ON_CONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_CONNECTED");
-            main_app_send_message(MAIN_APP_MSG_HTTPS_CONNECTED);
+            main_app_send_message(MAIN_APP_MSG_HTTPS_CONNECTED, 0, NULL);
             break;
         case HTTP_EVENT_HEADER_SENT:
             ESP_LOGI(TAG, "HTTP_EVENT_HEADER_SENT");
@@ -208,7 +208,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             if (evt->data) {
                 // Write out data
                 printf("%.*s", evt->data_len, (char*)evt->data);
-                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED);
+                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED,  0, NULL);
             }
             break;
         case HTTP_EVENT_ON_FINISH:
@@ -216,7 +216,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            main_app_send_message(MAIN_APP_MSG_HTTPS_DISCONNECTED);
+            main_app_send_message(MAIN_APP_MSG_HTTPS_DISCONNECTED, 0, NULL);
             break;
   		case HTTP_EVENT_REDIRECT:
             ESP_LOGI(TAG, "HTTP_EVENT_REDIRECT");

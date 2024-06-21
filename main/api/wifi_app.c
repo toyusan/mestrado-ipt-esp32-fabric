@@ -228,13 +228,13 @@ static void wifi_app_task(void *pvParameters){
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
 				// Notify that is connected
-				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED);
+				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED, 0 , NULL);
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
 				// Notify that is disconnected
-				main_app_send_message(MAIN_APP_MSG_STA_DISCONNECTED);
+				main_app_send_message(MAIN_APP_MSG_STA_DISCONNECTED, 0, NULL);
 				break;			
 				
 				default:
