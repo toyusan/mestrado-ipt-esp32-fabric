@@ -30,11 +30,12 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
-// APP Includes
+// Application Includes
 #include "portmacro.h"
 #include "tasks_common.h"
-#include "https_app.h"
-
+#include "main_app.h"
+#include "api/wifi_app.h"
+#include "api/https_app.h"
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
@@ -45,6 +46,7 @@ static const char TAG [] = "https_app";
 // Queue handle used to manipulate the main queue of events
 static QueueHandle_t https_app_queue_handle;
 
+static https_app_queue_message_t msg;
 /* Function prototypes ---------------------------------------------------*/
 
 /**
@@ -77,33 +79,54 @@ static esp_err_t https_app_perform_request(const char *url, const char *payload)
  * @param response_message Response message from the server
  * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFALSE
  */
-BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, const char *payload, int response_code, const char* response_message){
-    https_app_queue_message_t msg;
+BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, const char *payload, int response_code, const char* response_message) {
     msg.msgID = msgID;
     msg.url = NULL;
     msg.payload = NULL;
     msg.response_message = NULL;
     
-    if(url){
-		 msg.url = strdup(url);
+    ESP_LOGI(TAG, "1");
+    if(url) {
+         msg.url = strdup(url);
+         if (msg.url == NULL) {
+             ESP_LOGE(TAG, "Failed to allocate memory for URL");
+             return pdFALSE;
+         }
     }
-    if(payload){
-		 msg.payload = strdup(payload);
-	}
+    ESP_LOGI(TAG, "2");
+    if(payload) {
+         msg.payload = strdup(payload);
+         if (msg.payload == NULL) {
+             ESP_LOGE(TAG, "Failed to allocate memory for payload");
+             free((void*)msg.url); // Cleanup previously allocated memory
+             return pdFALSE;
+         }
+    }
+    ESP_LOGI(TAG, "3");
     msg.response_code = response_code;
-    if(response_message){
-		msg.response_message = strdup(response_message);
-	}
+    if(response_message) {
+        msg.response_message = strdup(response_message);
+        if (msg.response_message == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate memory for response_message");
+            free((void*)msg.url);      // Cleanup previously allocated memory
+            free((void*)msg.payload);  // Cleanup previously allocated memory
+            return pdFALSE;
+        }
+    }
+    ESP_LOGI(TAG, "4");
     BaseType_t result = xQueueSend(https_app_queue_handle, &msg, portMAX_DELAY);
-    
+    printf("result code %d\n", result);
     // Release memory if it fails
     if (result != pdTRUE) {
-		if (msg.url) {
-			free((void*)msg.url);
+        ESP_LOGI(TAG, "5");
+        if (msg.url) {
+            free((void*)msg.url);
         }
+        ESP_LOGI(TAG, "6");
         if (msg.payload) {
             free((void*)msg.payload);
         }
+        ESP_LOGI(TAG, "7");
         if (msg.response_message) {
             free((void*)msg.response_message);
         }
@@ -119,7 +142,9 @@ void https_app_start(void) {
 
     // Create message queue
     https_app_queue_handle = xQueueCreate(3, sizeof(https_app_queue_message_t));
-
+	if (https_app_queue_handle == NULL) {
+   		 ESP_LOGI(TAG, "Failed to create queue");
+	}
 	esp_log_level_set("esp-tls", ESP_LOG_DEBUG);
 	esp_log_level_set("esp-tls-mbedtls", ESP_LOG_DEBUG);
 

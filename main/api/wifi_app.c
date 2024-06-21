@@ -32,12 +32,12 @@
 #include "esp_wifi.h"
 #include "lwip/netdb.h"
 
-// APP Includes
+// Application Includes
 #include "portmacro.h"
 #include "tasks_common.h"
-#include "wifi_app.h"
-#include "https_app.h"
-
+#include "main_app.h"
+#include "api/wifi_app.h"
+#include "api/https_app.h"
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
@@ -212,7 +212,7 @@ static void wifi_app_task(void *pvParameters){
 	wifi_app_default_wifi_init();
 	
 	// SoftAP config
-	wifi_app_soft_ap_config();
+	//wifi_app_soft_ap_config();
 	
 	// Start WiFi
 	ESP_ERROR_CHECK(esp_wifi_start());
@@ -236,10 +236,10 @@ static void wifi_app_task(void *pvParameters){
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
 				
 				// Enviar uma mensagem de teste para a fila HTTPS
-    			const char *test_url = "https://18.230.239.105:3000/register-device";
-    			const char *test_payload = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
-    			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
-
+    			//const char *test_url = "https://18.230.239.105:3000/register-device";
+    			//const char *test_payload = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
+    			//https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
+				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED_GOT_IP);
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:

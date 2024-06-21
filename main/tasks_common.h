@@ -23,6 +23,9 @@ extern "C" {
 /* Public Macros -------------------------------------------------------------*/
 
 /* Public Types --------------------------------------------------------------*/
+// Main application task
+#define MAIN_APP_TASK_STACK_SIZE		2048
+#define MAIN_APP_TASK_PRIORITY			5
 
 // WiFi application task
 #define WIFI_APP_TASK_STACK_SIZE		4096
