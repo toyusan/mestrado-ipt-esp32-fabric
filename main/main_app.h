@@ -29,7 +29,7 @@ extern "C" {
  * @note Expand this based on your application requirements
  */
 typedef enum main_app_message{
-	 MAIN_APP_MSG_STA_CONNECTED_GOT_IP,
+	 MAIN_APP_MSG_STA_CONNECTED,
 	 MAIN_APP_MSG_STA_DISCONNECTED
 } main_app_message_e;
 

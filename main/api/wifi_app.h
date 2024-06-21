@@ -31,17 +31,6 @@ extern "C" {
 typedef void (*wifi_connected_event_callback_t)(void);
 
 // WiFi application settings
-#define WIFI_AP_SSID				"ESP32_AP"		// AP Name
-#define WIFI_AP_PASSWORD			"password"		// AP Password
-#define WIFI_AP_CHANNEL				1				// AP Channel
-#define WIFI_AP_SSID_HIDDEN			0				// AP Visibility
-#define WIFI_AP_MAX_CONNECTIONS		5				// AP Max clients
-#define WIFI_AP_BEACON_INTERVAL		100				// AP beacon: 100 miliseconds
-#define WIFI_AP_IP					"192.168.0.1"	// AP default IP
-#define WIFI_AP_GATEWAY				"192.168.0.1"	// AP default gatway. Same as IP
-#define WIFI_AP_NETMASK				"255.255.255.0"	// AP netmask
-#define WIFI_AP_BANDWIDTH			WIFI_BW_HT20	// AP Bandwidth 20MHz
-#define WIFI_AP_STA_POWER_SAVE		WIFI_PS_NONE	// Power save not used
 #define MAX_SSID_LENGTH				32				// IEEE standard maximum
 #define MAX_PASSWORD_LENGTH			64				// IEEE standard maximum
 #define MAX_CONNECTION_RETRIES		5				// Retry number on disconect

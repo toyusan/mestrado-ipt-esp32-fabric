@@ -116,10 +116,10 @@ static void main_app_task(void *pvParameters){
 	while(1){
 		if(xQueueReceive(main_app_queue_handle, &msg, portMAX_DELAY)){
 			switch(msg.msgID){
-				case MAIN_APP_MSG_STA_CONNECTED_GOT_IP:
-				ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED_GOT_IP");	
+				case MAIN_APP_MSG_STA_CONNECTED:
+				ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED");	
 				
-				// Enviar uma mensagem de teste para a fila HTTPS
+				// Sends message to the https task
     			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
 
 				break;

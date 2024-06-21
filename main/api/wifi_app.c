@@ -38,6 +38,7 @@
 #include "main_app.h"
 #include "api/wifi_app.h"
 #include "api/https_app.h"
+
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
@@ -56,9 +57,8 @@ static int g_retry_number;
 // Queue handle used to manipulate the main queue of events
 static QueueHandle_t wifi_app_queue_handle;
 
-// netif objects for the station and access point
+// netif objects for the station
 esp_netif_t* esp_netif_sta = NULL;
-esp_netif_t* esp_netif_ap  = NULL;
 
 /* Function prototypes ---------------------------------------------------*/
 
@@ -87,11 +87,6 @@ static void wifi_app_event_handler_init(void);
  */
 static void wifi_app_event_handler(void* arg_data, esp_event_base_t event_base, int32_t event_id, void* event_data);
  
-/**
- * Initializes the WiFi access point settings and assigns the static IP to the SoftAP.
- */
-static void wifi_app_soft_ap_config(void); 
-
 /**
  * Initializes the WiFi sta settings.
  */
@@ -150,7 +145,7 @@ static void wifi_app_soft_sta_config(void){
 	size_t len_ssid = 0, len_pass = 0;
 	
 	// Get SSID header
-	len_ssid = strlen(PERSONAL_SSID)+ 1;
+	len_ssid = strlen(PERSONAL_SSID) + 1;
 	if (len_ssid > 1){
 		ssid_str = malloc(len_ssid);
 		strcpy(ssid_str, PERSONAL_SSID);
@@ -158,7 +153,7 @@ static void wifi_app_soft_sta_config(void){
 	}
 	
 	// Get Password header
-	len_pass = strlen(PERSONAL_PASS)+ 1;
+	len_pass = strlen(PERSONAL_PASS) + 1;
 	if (len_pass > 1){
 		pass_str = malloc(len_pass);
 		strcpy(pass_str, PERSONAL_PASS);
@@ -171,7 +166,6 @@ static void wifi_app_soft_sta_config(void){
 	memcpy(wifi_config->sta.ssid, ssid_str, len_ssid);
 	memcpy(wifi_config->sta.password, pass_str, len_pass);
 	printf("Connect to  %s - %s\n", wifi_config->sta.ssid, wifi_config->sta.password);
-	wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 }
 
 /**
@@ -211,14 +205,14 @@ static void wifi_app_task(void *pvParameters){
 	// Initialize the TCP/IP stack and WiFi configuration
 	wifi_app_default_wifi_init();
 	
-	// SoftAP config
-	//wifi_app_soft_ap_config();
-	
 	// Start WiFi
 	ESP_ERROR_CHECK(esp_wifi_start());
 	
-	// Connect to the WiFi Network
+	// Configure the WiFi Network
 	wifi_app_soft_sta_config();
+	
+	// Connect to the WiFi Network
+	wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 	
 	while(1){
 		if(xQueueReceive(wifi_app_queue_handle, &msg, portMAX_DELAY)){
@@ -227,28 +221,20 @@ static void wifi_app_task(void *pvParameters){
 				ESP_LOGI(TAG, "WIFI_APP_MSG_CONNECTING_STA");
 				// Attempt a connection
 				wifi_app_connect_sta();
-
 				// Set current number of retries to zero
 				g_retry_number = 0;
 				break;
 				
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
-				
-				// Enviar uma mensagem de teste para a fila HTTPS
-    			//const char *test_url = "https://18.230.239.105:3000/register-device";
-    			//const char *test_payload = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
-    			//https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, test_url, test_payload, 0, NULL);
-				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED_GOT_IP);
+				// Notify that is connected
+				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED);
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
-				// Attempt a connection
-				wifi_app_connect_sta();
-
-				// Set current number of retries to zero
-				g_retry_number = 0;
+				// Notify that is disconnected
+				main_app_send_message(MAIN_APP_MSG_STA_DISCONNECTED);
 				break;			
 				
 				default:
@@ -346,43 +332,5 @@ static void wifi_app_default_wifi_init(void){
 	ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	esp_netif_sta = esp_netif_create_default_wifi_sta();
-	esp_netif_ap = esp_netif_create_default_wifi_ap();
-}
-
-/**
- * Initializes the WiFi access point settings and assigns the static IP to the SoftAP.
- */
-static void wifi_app_soft_ap_config(void){
-	
-	// SoftAP - WiFi access point configuration
-	wifi_config_t ap_config = {
-		.ap = {
-			.ssid            = WIFI_AP_SSID,
-			.ssid_len        = strlen(WIFI_AP_SSID),
-			.password        = WIFI_AP_PASSWORD,
-			.channel         = WIFI_AP_CHANNEL,
-			.ssid_hidden     = WIFI_AP_SSID_HIDDEN,
-			.authmode        = WIFI_AUTH_WPA2_PSK,
-			.max_connection  = WIFI_AP_MAX_CONNECTIONS,
-			.beacon_interval = WIFI_AP_BEACON_INTERVAL, 
-		},
-	};
-	
-	// Configure DHCP for the AP
-	esp_netif_ip_info_t ap_ip_info;
-	memset(&ap_ip_info, 0x00, sizeof(ap_ip_info));
-	
-	esp_netif_dhcps_stop(esp_netif_ap); ///> Must call this first
-	inet_pton(AF_INET, WIFI_AP_IP, &ap_ip_info.ip); ///> Assign access point's static IP, GW and Netmask
-	inet_pton(AF_INET, WIFI_AP_GATEWAY, &ap_ip_info.gw);
-	inet_pton(AF_INET, WIFI_AP_NETMASK, &ap_ip_info.netmask);
-	
-	ESP_ERROR_CHECK(esp_netif_set_ip_info(esp_netif_ap, &ap_ip_info)); ///> Statically configure the network interface
-	ESP_ERROR_CHECK(esp_netif_dhcps_start(esp_netif_ap)); ///> Start the AP DHCP server (for connecting stations e.g. your mobile device)
-	
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA)); ///> Setting the mode as Access Point / Station Mode
-	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config)); ///> Set our configuration
-	ESP_ERROR_CHECK(esp_wifi_set_bandwidth(ESP_IF_WIFI_AP, WIFI_AP_BANDWIDTH)); ///> Our default bandwidth 20MHz
-	ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_AP_STA_POWER_SAVE));
 }
 /** @} */
