@@ -86,18 +86,13 @@ wifi_config_t* wifi_app_get_wifi_config(void);
 /**
  * Sets the callback function.
  */
-void wifi_app_set_callback(wifi_connected_event_callback_t cb);
+//void wifi_app_set_callback(wifi_connected_event_callback_t cb);
 
 /**
  * Calls the callback function.
  */
-void wifi_app_call_callback(void);
+//void wifi_app_call_callback(void);
 
-/**
- * Gets the RSSI value of the Wifi connection.
- * @return current RSSI level.
- */
-int8_t wifi_app_get_rssi(void);
 
 /** @} */
 

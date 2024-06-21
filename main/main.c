@@ -126,6 +126,9 @@ static void main_app_task(void *pvParameters){
 	 			
 	 			case MAIN_APP_MSG_STA_DISCONNECTED:
 	 			ESP_LOGI(TAG, "MAIN_APP_MSG_STA_DISCONNECTED");
+	 			
+	 			// Sends mesage to the wifi task to connect again
+	 			wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 	 			break;
 	 			
 	 			default:
