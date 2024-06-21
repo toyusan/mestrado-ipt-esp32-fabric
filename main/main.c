@@ -74,7 +74,6 @@ static void main_app_task(void *pvParameters);
  * @defgroup main.c Public Functions
  * @{
  */
- 
 void app_main(void){
 	
 	// Initialize the NVS
@@ -150,6 +149,11 @@ static void main_app_task(void *pvParameters){
                 ESP_LOGI(TAG, "Unknown message ID");
                 break;
 			}
+			
+			// Release memory allocated for the strings
+			if(msg.data){
+				free((void*)msg.data);
+			}
 		}
 	}
 }
@@ -160,11 +164,25 @@ static void main_app_task(void *pvParameters){
  * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFalse
  * @note Expand the parameter list based on your requirements e.g. how you've expanded the wifi_app_queue_message_t. 
  */
-BaseType_t main_app_send_message(main_app_message_e msgID, int code, char* data){
-	main_app_queue_message_t msg;
+BaseType_t main_app_send_message(main_app_message_e msgID, int code, const char* data){
+	static main_app_queue_message_t msg;
 	msg.msgID = msgID;
 	msg.code = code;
-	msg.data = data;
-	return xQueueSend(main_app_queue_handle, &msg, portMAX_DELAY);
+	msg.data = NULL;
+	
+	if(data) {
+         msg.data = strdup(data);
+         if (msg.data == NULL) {
+             ESP_LOGI(TAG, "Failed to allocate memory for Data");
+             return pdFALSE;
+         }
+    }
+	BaseType_t result = xQueueSend(main_app_queue_handle, &msg, portMAX_DELAY);
+	if (result != pdTRUE){
+		if(msg.data){
+			free((void*)msg.data);
+		}
+	}
+	return result;
 }
  /** @} */
