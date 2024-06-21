@@ -17,6 +17,7 @@
 // Standard C Includes
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <unistd.h>
 
 // Include Systems configuration
@@ -42,9 +43,11 @@
 #include "main_app.h"
 #include "api/wifi_app.h"
 #include "api/https_app.h"
+
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
+
 
 /* Private variables -----------------------------------------------------*/
 
@@ -129,6 +132,18 @@ static void main_app_task(void *pvParameters){
 	 			
 	 			// Sends mesage to the wifi task to connect again
 	 			wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
+	 			break;
+	 			
+	 			case MAIN_APP_MSG_HTTPS_CONNECTED:
+	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_CONNECTED");
+	 			break;
+	 			
+	 			case MAIN_APP_MSG_HTTPS_RECEIVED:
+	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_RECEIVED");
+	 			break;
+	 			
+	 			case MAIN_APP_MSG_HTTPS_DISCONNECTED:
+	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
 	 			break;
 	 			
 	 			default:

@@ -1,4 +1,4 @@
-/*
+/**
 *************************************************************************
 * @file			https_app.c
 * @brief		Source file for the https_app.c module.
@@ -46,7 +46,7 @@ static const char TAG [] = "https_app";
 // Queue handle used to manipulate the main queue of events
 static QueueHandle_t https_app_queue_handle;
 
-static https_app_queue_message_t msg;
+char g_response_buffer[HTTPS_RESPONSE_BUFFER_SIZE];
 /* Function prototypes ---------------------------------------------------*/
 
 /**
@@ -80,53 +80,47 @@ static esp_err_t https_app_perform_request(const char *url, const char *payload)
  * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFALSE
  */
 BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, const char *payload, int response_code, const char* response_message) {
+    static https_app_queue_message_t msg;
     msg.msgID = msgID;
     msg.url = NULL;
     msg.payload = NULL;
     msg.response_message = NULL;
     
-    ESP_LOGI(TAG, "1");
     if(url) {
          msg.url = strdup(url);
          if (msg.url == NULL) {
-             ESP_LOGE(TAG, "Failed to allocate memory for URL");
+             ESP_LOGI(TAG, "Failed to allocate memory for URL");
              return pdFALSE;
          }
     }
-    ESP_LOGI(TAG, "2");
     if(payload) {
          msg.payload = strdup(payload);
          if (msg.payload == NULL) {
-             ESP_LOGE(TAG, "Failed to allocate memory for payload");
+             ESP_LOGI(TAG, "Failed to allocate memory for payload");
              free((void*)msg.url); // Cleanup previously allocated memory
              return pdFALSE;
          }
     }
-    ESP_LOGI(TAG, "3");
     msg.response_code = response_code;
     if(response_message) {
         msg.response_message = strdup(response_message);
         if (msg.response_message == NULL) {
-            ESP_LOGE(TAG, "Failed to allocate memory for response_message");
+            ESP_LOGI(TAG, "Failed to allocate memory for response_message");
             free((void*)msg.url);      // Cleanup previously allocated memory
             free((void*)msg.payload);  // Cleanup previously allocated memory
             return pdFALSE;
         }
     }
-    ESP_LOGI(TAG, "4");
     BaseType_t result = xQueueSend(https_app_queue_handle, &msg, portMAX_DELAY);
     printf("result code %d\n", result);
     // Release memory if it fails
     if (result != pdTRUE) {
-        ESP_LOGI(TAG, "5");
         if (msg.url) {
             free((void*)msg.url);
         }
-        ESP_LOGI(TAG, "6");
         if (msg.payload) {
             free((void*)msg.payload);
         }
-        ESP_LOGI(TAG, "7");
         if (msg.response_message) {
             free((void*)msg.response_message);
         }
@@ -174,20 +168,7 @@ static void https_app_task(void *pvParameters) {
                     ESP_LOGI(TAG, "HTTPS_APP_MSG_SEND_REQUEST");
                     https_app_perform_request(msg.url, msg.payload);
                     break;
-                    
-                case HTTPS_APP_MSG_RECEIVE_RESPONSE:
-                	ESP_LOGI(TAG, "HTTPS_APP_MSG_RECEIVE_RESPONSE");
-                	// Process the server response
-                    ESP_LOGI(TAG, "Response Code: %d", msg.response_code);
-                    ESP_LOGI(TAG, "Response Message: %s", msg.response_message);
-                break;    
-                
-                 case HTTPS_APP_MSG_DOWNLOAD_IPFS:
-                    ESP_LOGI(TAG, "HTTPS_APP_MSG_DOWNLOAD_IPFS");
-                    // Implement IPFS download functionality
-                    //https_app_download_ipfs(msg.url);
-                break;               
-                
+                           
                 default:
                     ESP_LOGI(TAG, "Unknown message ID");
                     break;
@@ -214,6 +195,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_ON_CONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_CONNECTED");
+            main_app_send_message(MAIN_APP_MSG_HTTPS_CONNECTED);
             break;
         case HTTP_EVENT_HEADER_SENT:
             ESP_LOGI(TAG, "HTTP_EVENT_HEADER_SENT");
@@ -223,9 +205,10 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_ON_DATA:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            if (evt->data) {//if (!esp_http_client_is_chunked_response(evt->client)) {
+            if (evt->data) {
                 // Write out data
                 printf("%.*s", evt->data_len, (char*)evt->data);
+                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED);
             }
             break;
         case HTTP_EVENT_ON_FINISH:
@@ -233,6 +216,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
+            main_app_send_message(MAIN_APP_MSG_HTTPS_DISCONNECTED);
             break;
   		case HTTP_EVENT_REDIRECT:
             ESP_LOGI(TAG, "HTTP_EVENT_REDIRECT");
@@ -250,7 +234,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
  * @return esp_err_t ESP_OK on success, or an error code on failure
  */
 static esp_err_t https_app_perform_request(const char *url, const char *payload) {
-    // Configuração do cliente HTTP
+    // HTTPS configuration
     esp_http_client_config_t config = {
         .url = url,
         .method = HTTP_METHOD_POST,
@@ -262,36 +246,33 @@ static esp_err_t https_app_perform_request(const char *url, const char *payload)
         .client_key_len = client_key_pem_end - client_key_pem_start,
         .event_handler = client_event_handler,
         .skip_cert_common_name_check = true, // Ignorar a verificação do nome comum do certificado
-        .use_global_ca_store = false, // Opcionalmente, desabilitar o uso da loja de CA global
+        .use_global_ca_store = false,        // Opcionalmente, desabilitar o uso da loja de CA global
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
     };
 
-    // Inicialização do cliente HTTP
+    // Initialize HTTPS client
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
-    // Configuração do payload da requisição
+    // Payload requisition configuration
     esp_http_client_set_post_field(client, payload, strlen(payload));
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
-    // Envio da requisição
+    // Send requisition
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        // Tratamento da resposta
+        // Get answer
         int status_code = esp_http_client_get_status_code(client);
         int content_length = esp_http_client_get_content_length(client);
-        char response_buffer[512];
-        esp_http_client_read(client, response_buffer, sizeof(response_buffer));
+        esp_http_client_read(client, g_response_buffer, sizeof(g_response_buffer));
 
-        // Log da resposta
         ESP_LOGI(TAG, "HTTPS POST Status = %d, content_length = %d", status_code, content_length);
         if(content_length > 0)
-        	ESP_LOGI(TAG, "Response: %s", response_buffer);
+        	ESP_LOGI(TAG, "Response: %s", g_response_buffer);
     } else {
-        // Log do erro
         ESP_LOGE(TAG, "HTTPS POST request failed: %s", esp_err_to_name(err));
     }
 
-    // Cleanup do cliente HTTP
+    // Cleanup HTTPS
     esp_http_client_cleanup(client);
 
     return err;

@@ -31,6 +31,7 @@ extern "C" {
 // HTTPS Server definitions
 #define HTTPS_SERVER_URL " https://18.230.239.105"
 #define HTTPS_SERVER_PORT 3000
+#define HTTPS_RESPONSE_BUFFER_SIZE 512
 
 //Server certifies
 extern const char ca_cert_pem_start[] asm("_binary_ca_cert_pem_start");
