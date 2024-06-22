@@ -19,6 +19,8 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "version.h"
+
 // APP Includes
 
 
@@ -33,6 +35,15 @@ extern "C" {
 #define HTTPS_SERVER_PORT 3000
 #define HTTPS_RESPONSE_BUFFER_SIZE 512
 
+// Defines for the Smart Contract interface
+#define ADDRESS_REGISTER_DEVICE "https://18.230.239.105:3000/register-device"
+
+//#define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}"
+#define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"" HARDWARE_MODEL "\", \"softwareVersion\": \"" FIRMWARE_VERSION "\"}"
+
+#define HTTPS_RECEIVED_MSG_SUCCESS 200
+
+
 //Server certifies
 extern const char ca_cert_pem_start[] asm("_binary_ca_cert_pem_start");
 extern const char ca_cert_pem_end[] asm("_binary_ca_cert_pem_end");
@@ -44,6 +55,18 @@ extern const char client_cert_pem_end[] asm("_binary_device_cert_pem_end");
 // Client private key 
 extern const char client_key_pem_start[] asm("_binary_device_key_pem_start");
 extern const char client_key_pem_end[] asm("_binary_device_key_pem_end");
+
+// Remote Firmware Meta Data
+typedef struct {
+	char status[50];
+    char version[20];
+    char author[50];
+    char hardwareModel[50];
+    char integrityHash[100];
+    char timestamp[20];
+    char description[200];
+    char cid[100];
+} firmware_metadata_info_t;
 
 /* Public Function Prototypes -------------------------------------------------*/
 /**

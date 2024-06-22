@@ -149,7 +149,7 @@ static void wifi_app_soft_sta_config(void){
 	if (len_ssid > 1){
 		ssid_str = malloc(len_ssid);
 		strcpy(ssid_str, PERSONAL_SSID);
-		printf("ssid_str %s len_ssid %d\n", ssid_str, len_ssid);
+		//printf("ssid_str %s len_ssid %d\n", ssid_str, len_ssid);
 	}
 	
 	// Get Password header
@@ -157,7 +157,7 @@ static void wifi_app_soft_sta_config(void){
 	if (len_pass > 1){
 		pass_str = malloc(len_pass);
 		strcpy(pass_str, PERSONAL_PASS);
-		printf("pass_str %s len_pass %d\n", pass_str, len_pass);
+		//printf("pass_str %s len_pass %d\n", pass_str, len_pass);
 	}
 	
     // Update the Wifi networks configuration and let the wifi application know
@@ -165,7 +165,8 @@ static void wifi_app_soft_sta_config(void){
 	memset(wifi_config, 0x00, sizeof(wifi_config_t));
 	memcpy(wifi_config->sta.ssid, ssid_str, len_ssid);
 	memcpy(wifi_config->sta.password, pass_str, len_pass);
-	printf("Connect to  %s - %s\n", wifi_config->sta.ssid, wifi_config->sta.password);
+	//printf("Connect to  %s - %s\n", wifi_config->sta.ssid, wifi_config->sta.password);
+	ESP_LOGI(TAG, "Connect to  %s - %s", wifi_config->sta.ssid, wifi_config->sta.password);
 }
 
 /**
@@ -228,13 +229,13 @@ static void wifi_app_task(void *pvParameters){
 				case WIFI_APP_MSG_STA_CONNECTED_GOT_IP:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_CONNECTED_GOT_IP");
 				// Notify that is connected
-				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED, 0 , NULL);
+				main_app_send_message(MAIN_APP_MSG_STA_CONNECTED, 0 ,0, NULL);
 				break;
 
 				case WIFI_APP_MSG_STA_DISCONNECTED:
 				ESP_LOGI(TAG, "WIFI_APP_MSG_STA_DISCONNECTED");
 				// Notify that is disconnected
-				main_app_send_message(MAIN_APP_MSG_STA_DISCONNECTED, 0, NULL);
+				main_app_send_message(MAIN_APP_MSG_STA_DISCONNECTED, 0,0, NULL);
 				break;			
 				
 				default:
@@ -298,7 +299,8 @@ static void wifi_app_event_handler_init(void){
 			 ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
 			 wifi_event_sta_disconnected_t *wifi_event_sta_disconnected = (wifi_event_sta_disconnected_t*)malloc(sizeof(wifi_event_sta_disconnected_t));
 			 *wifi_event_sta_disconnected = *((wifi_event_sta_disconnected_t*)event_data);
-			 printf("WIFI_EVENT_STA_DISCONNECTED, reason code %d\n", wifi_event_sta_disconnected->reason);
+			 //printf("WIFI_EVENT_STA_DISCONNECTED, reason code %d\n", wifi_event_sta_disconnected->reason);
+			 ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED, reason code %d\n", wifi_event_sta_disconnected->reason);
 			 if (g_retry_number < MAX_CONNECTION_RETRIES){
 				 esp_wifi_connect();
 				 g_retry_number ++;

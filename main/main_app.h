@@ -43,6 +43,7 @@ typedef enum main_app_message{
 typedef struct main_app_queue_message{
 	main_app_message_e msgID;
 	int code;
+	int len;
 	const char* data;
 } main_app_queue_message_t;
 
@@ -58,7 +59,7 @@ typedef struct main_app_queue_message{
  * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFalse
  * @note Expand the parameter list based on your requirements e.g. how you've expanded the wifi_app_queue_message_t. 
  */
-BaseType_t main_app_send_message(main_app_message_e msgID, int code, const char* data);
+BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, const char* data);
 
 /** @} */
 

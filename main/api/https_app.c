@@ -112,7 +112,7 @@ BaseType_t https_app_send_message(https_app_message_e msgID, const char *url, co
         }
     }
     BaseType_t result = xQueueSend(https_app_queue_handle, &msg, portMAX_DELAY);
-    printf("result code %d\n", result);
+    //printf("result code %d\n", result);
     // Release memory if it fails
     if (result != pdTRUE) {
         if (msg.url) {
@@ -189,13 +189,14 @@ static void https_app_task(void *pvParameters) {
 }
 
 esp_err_t client_event_handler(esp_http_client_event_t *evt) {
+	
     switch (evt->event_id) {
         case HTTP_EVENT_ERROR:
             ESP_LOGI(TAG, "HTTP_EVENT_ERROR");
             break;
         case HTTP_EVENT_ON_CONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_CONNECTED");
-            main_app_send_message(MAIN_APP_MSG_HTTPS_CONNECTED, 0, NULL);
+            main_app_send_message(MAIN_APP_MSG_HTTPS_CONNECTED, 0,0, NULL);
             break;
         case HTTP_EVENT_HEADER_SENT:
             ESP_LOGI(TAG, "HTTP_EVENT_HEADER_SENT");
@@ -207,8 +208,8 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
             if (evt->data) {
                 // Write out data
-                printf("%.*s", evt->data_len, (char*)evt->data);
-                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED,  0, NULL);
+                //printf("%.*s", evt->data_len, (char*)evt->data); 
+                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED,  esp_http_client_get_status_code(evt->client), evt->data_len,(char*)evt->data);
             }
             break;
         case HTTP_EVENT_ON_FINISH:
@@ -216,7 +217,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            main_app_send_message(MAIN_APP_MSG_HTTPS_DISCONNECTED, 0, NULL);
+            main_app_send_message(MAIN_APP_MSG_HTTPS_DISCONNECTED, 0, 0,NULL);
             break;
   		case HTTP_EVENT_REDIRECT:
             ESP_LOGI(TAG, "HTTP_EVENT_REDIRECT");
