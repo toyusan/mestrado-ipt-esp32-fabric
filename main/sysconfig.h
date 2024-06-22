@@ -36,9 +36,11 @@ extern "C" {
 #define HTTPS_RESPONSE_BUFFER_SIZE 512
 
 // Defines for the Smart Contract interface
+#define URL_LEN 50
+#define PAYLOAD_LEN 150
+
 #define ADDRESS_REGISTER_DEVICE "https://18.230.239.105:3000/register-device"
 
-//#define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}"
 #define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"" HARDWARE_MODEL "\", \"softwareVersion\": \"" FIRMWARE_VERSION "\"}"
 
 #define HTTPS_RECEIVED_MSG_SUCCESS 200

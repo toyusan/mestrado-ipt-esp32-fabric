@@ -61,8 +61,8 @@ static QueueHandle_t main_app_queue_handle;
 static firmware_metadata_info_t firmware_info = {0};
 
 // Strings for the https communication
-const char url_register_device[] = "https://18.230.239.105:3000/register-device";
-const char payload_register_device[] = "{\"hardwareVersion\": \"ModelX\", \"softwareVersion\": \"v1.1\"}";
+char url_register_device[URL_LEN] = {0};
+char payload_register_device[PAYLOAD_LEN] = {0};
 
 /* Function prototypes ---------------------------------------------------*/
 
@@ -72,6 +72,12 @@ const char payload_register_device[] = "{\"hardwareVersion\": \"ModelX\", \"soft
  */
 static void main_app_task(void *pvParameters);
 
+/**
+ * @brief Process the HTTP response and extract firmware information.
+ * @param response The response string from the server.
+ * @param len The length of the response string.
+ * @param firmware_info Pointer to the firmware metadata information structure.
+ */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info);
 
 /* Public Functions ------------------------------------------------------*/ 
@@ -132,6 +138,8 @@ static void main_app_task(void *pvParameters){
 				ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED");	
 				
 				// Sends message to the https task
+				strcpy((char*)url_register_device, ADDRESS_REGISTER_DEVICE);
+				strcpy((char*)payload_register_device, PAYLOAD_REGISTER_DEVICE);
     			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_register_device, payload_register_device, 0, NULL);
 				break;
 	 			
@@ -218,6 +226,12 @@ BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, co
 	return result;
 }
 
+/**
+ * @brief Process the HTTP response and extract firmware information.
+ * @param response The response string from the server.
+ * @param len The length of the response string.
+ * @param firmware_info Pointer to the firmware metadata information structure.
+ */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info){
  // Check if the response is a known plain text message
     if (strstr(response, "ERROR: Hardware version not found") || strstr(response, "OK: No update needed")) {

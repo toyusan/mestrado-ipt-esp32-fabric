@@ -188,6 +188,11 @@ static void https_app_task(void *pvParameters) {
     }
 }
 
+/**
+ * @brief Event handler for HTTP client events
+ * @param evt Pointer to HTTP client event structure
+ * @return ESP_OK on success, or an error code on failure
+ */
 esp_err_t client_event_handler(esp_http_client_event_t *evt) {
 	
     switch (evt->event_id) {
