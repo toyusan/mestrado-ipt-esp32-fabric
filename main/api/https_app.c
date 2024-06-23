@@ -46,7 +46,9 @@ static const char TAG [] = "https_app";
 // Queue handle used to manipulate the main queue of events
 static QueueHandle_t https_app_queue_handle;
 
-char g_response_buffer[HTTPS_RESPONSE_BUFFER_SIZE];
+static char g_response_buffer[HTTPS_RESPONSE_BUFFER_SIZE];
+static char g_response_buffer_to_send[HTTPS_RESPONSE_BUFFER_SIZE];
+static int  g_len = 0;
 /* Function prototypes ---------------------------------------------------*/
 
 /**
@@ -211,14 +213,23 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             break;
         case HTTP_EVENT_ON_DATA:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            if (evt->data) {
+            //if (evt->data) {
                 // Write out data
                 //printf("%.*s", evt->data_len, (char*)evt->data); 
-                main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED,  esp_http_client_get_status_code(evt->client), evt->data_len,(char*)evt->data);
+                //main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED,  esp_http_client_get_status_code(evt->client), evt->data_len,(char*)evt->data);
+            if(g_len + evt->data_len < HTTPS_RESPONSE_BUFFER_SIZE){
+				strncat(g_response_buffer_to_send, (char*)evt->data, evt->data_len);
+				g_len += evt->data_len;
             }
+            else{
+				ESP_LOGI(TAG,"RESPONSE BUFFER OVERFLOW");
+			}
             break;
         case HTTP_EVENT_ON_FINISH:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_FINISH");
+            main_app_send_message(MAIN_APP_MSG_HTTPS_RECEIVED, HTTPS_RECEIVED_MSG_SUCCESS, g_len, g_response_buffer_to_send);
+            memset(g_response_buffer_to_send, 0x00, HTTPS_RESPONSE_BUFFER_SIZE);
+            g_len = 0;
             break;
         case HTTP_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");

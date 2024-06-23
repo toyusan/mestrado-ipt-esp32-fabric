@@ -233,8 +233,8 @@ BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, co
  * @param firmware_info Pointer to the firmware metadata information structure.
  */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info){
- // Check if the response is a known plain text message
-    if (strstr(response, "ERROR: Hardware version not found") || strstr(response, "OK: No update needed")) {
+    // Check if the response is a known plain text message
+    if (strstr(response, ERROR_HW_NOT_FOUND) || strstr(response, VERSION_UPDATED)) {
         strncpy(firmware_info->status, response, len);
         firmware_info->status[sizeof(firmware_info->status) - 1] = '\0';  // Ensure null termination
         return;
@@ -253,7 +253,7 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
         strncpy(firmware_info->status, message->valuestring, sizeof(firmware_info->status) - 1);
         firmware_info->status[sizeof(firmware_info->status) - 1] = '\0';  // Ensure null termination
 
-        if (strcmp(firmware_info->status, "Update available") == 0) {
+        if (strcmp(firmware_info->status, VERSION_OUTDATED) == 0) {
             // Extract the "latestFirmware" object
             cJSON *latestFirmware = cJSON_GetObjectItem(json, "latestFirmware");
             if (!cJSON_IsObject(latestFirmware)) {

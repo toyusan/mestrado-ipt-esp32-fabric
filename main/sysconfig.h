@@ -27,24 +27,30 @@ extern "C" {
 /* Public Macros -------------------------------------------------------------*/
 
 /* Public Types --------------------------------------------------------------*/
+
+// WiFi Configuration
 #define PERSONAL_SSID "Apto 172"
 #define PERSONAL_PASS "30082023"
 
 // HTTPS Server definitions
-#define HTTPS_SERVER_URL " https://18.230.239.105"
-#define HTTPS_SERVER_PORT 3000
-#define HTTPS_RESPONSE_BUFFER_SIZE 512
+#define HTTPS_BLOCKCHAIN_SERVER_URL "https://18.230.239.105"
+#define HTTPS_BLOCKCHAIN_SERVER_PORT "3000"
+
+#define HTTPS_IPFS_SERVER_URL ""
+
+#define HTTPS_RESPONSE_BUFFER_SIZE 2048
+#define HTTPS_RECEIVED_MSG_SUCCESS 200
 
 // Defines for the Smart Contract interface
 #define URL_LEN 50
 #define PAYLOAD_LEN 150
 
-#define ADDRESS_REGISTER_DEVICE "https://18.230.239.105:3000/register-device"
-
+#define ADDRESS_REGISTER_DEVICE ""HTTPS_BLOCKCHAIN_SERVER_URL":"HTTPS_BLOCKCHAIN_SERVER_PORT"/register-device"
 #define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"" HARDWARE_MODEL "\", \"softwareVersion\": \"" FIRMWARE_VERSION "\"}"
 
-#define HTTPS_RECEIVED_MSG_SUCCESS 200
-
+#define ERROR_HW_NOT_FOUND "ERROR: Hardware version not found"
+#define VERSION_UPDATED "OK: No update needed"
+#define VERSION_OUTDATED "Update available"
 
 //Server certifies
 extern const char ca_cert_pem_start[] asm("_binary_ca_cert_pem_start");
@@ -64,10 +70,10 @@ typedef struct {
     char version[20];
     char author[50];
     char hardwareModel[50];
-    char integrityHash[100];
+    char integrityHash[255];
     char timestamp[20];
-    char description[200];
-    char cid[100];
+    char description[255];
+    char cid[255];
 } firmware_metadata_info_t;
 
 /* Public Function Prototypes -------------------------------------------------*/
