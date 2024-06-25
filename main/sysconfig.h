@@ -33,19 +33,21 @@ extern "C" {
 #define PERSONAL_PASS "30082023"
 
 // HTTPS Server definitions
-#define HTTPS_BLOCKCHAIN_SERVER_URL "https://18.230.239.105"
-#define HTTPS_BLOCKCHAIN_SERVER_PORT "3000"
+#define URL_LEN 50
+#define PAYLOAD_LEN 255
 
-#define HTTPS_IPFS_SERVER_URL ""
+#define HTTPS_BLOCKCHAIN_SERVER_URL "https://18.230.239.105:3000"
+//#define HTTPS_BLOCKCHAIN_SERVER_PORT "3000"
+
+//http://<gateway-ec2-ip-address>:8080/ipfs/<cid-do-firmware>
+#define HTTPS_IPFS_SERVER_URL "http://177.71.161.69:8080/ipfs/"
 
 #define HTTPS_RESPONSE_BUFFER_SIZE 2048
 #define HTTPS_RECEIVED_MSG_SUCCESS 200
 
 // Defines for the Smart Contract interface
-#define URL_LEN 50
-#define PAYLOAD_LEN 150
-
-#define ADDRESS_REGISTER_DEVICE ""HTTPS_BLOCKCHAIN_SERVER_URL":"HTTPS_BLOCKCHAIN_SERVER_PORT"/register-device"
+//#define ADDRESS_REGISTER_DEVICE ""HTTPS_BLOCKCHAIN_SERVER_URL":"HTTPS_BLOCKCHAIN_SERVER_PORT"/register-device"
+#define ADDRESS_REGISTER_DEVICE ""HTTPS_BLOCKCHAIN_SERVER_URL"/register-device"
 #define PAYLOAD_REGISTER_DEVICE "{\"hardwareVersion\": \"" HARDWARE_MODEL "\", \"softwareVersion\": \"" FIRMWARE_VERSION "\"}"
 
 #define ERROR_HW_NOT_FOUND "ERROR: Hardware version not found"

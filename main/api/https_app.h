@@ -31,6 +31,7 @@ extern "C" {
  */
 typedef enum https_app_message {
     HTTPS_APP_MSG_SEND_REQUEST = 0,
+    HTTPS_APP_MSG_DOWNLOAD_FW
 } https_app_message_e;
 
 /**

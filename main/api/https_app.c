@@ -65,6 +65,7 @@ static void https_app_task(void *pvParameters);
  */
 static esp_err_t https_app_perform_request(const char *url, const char *payload);
 
+static void https_app_download_firmware(const char *url);
 /* Public Functions ------------------------------------------------------*/
 
 /**
@@ -169,6 +170,11 @@ static void https_app_task(void *pvParameters) {
 				case HTTPS_APP_MSG_SEND_REQUEST:
                     ESP_LOGI(TAG, "HTTPS_APP_MSG_SEND_REQUEST");
                     https_app_perform_request(msg.url, msg.payload);
+                    break;
+                    
+                case HTTPS_APP_MSG_DOWNLOAD_FW:
+                    ESP_LOGI(TAG, "HTTPS_APP_MSG_DOWNLOAD_FW");
+                    https_app_download_firmware(msg.url);
                     break;
                            
                 default:
@@ -295,6 +301,8 @@ static esp_err_t https_app_perform_request(const char *url, const char *payload)
     return err;
 }
 
-
+static void https_app_download_firmware(const char *url){
+	
+}
 
 /** @} */

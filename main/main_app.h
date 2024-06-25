@@ -36,6 +36,14 @@ typedef enum main_app_message{
 	 MAIN_APP_MSG_HTTPS_DISCONNECTED
 } main_app_message_e;
 
+
+typedef enum main_app_state{
+	MAIN_APP_IDLE,
+	MAIN_APP_CHECK_FW,
+	MAIN_APP_DOWNLOAD_FW,
+	MAIN_APP_UPDATE_STATUS,
+} main_app_state_e;
+
 /**
  * @brief Structure for the message queue
  * @note Expand this based on application requirements e.g. add another type and parameter as required

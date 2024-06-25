@@ -60,9 +60,11 @@ static QueueHandle_t main_app_queue_handle;
 
 static firmware_metadata_info_t firmware_info = {0};
 
+main_app_state_e state = MAIN_APP_IDLE;
+
 // Strings for the https communication
-char url_register_device[URL_LEN] = {0};
-char payload_register_device[PAYLOAD_LEN] = {0};
+char url_string[URL_LEN] = {0};
+char payload_string[PAYLOAD_LEN] = {0};
 
 /* Function prototypes ---------------------------------------------------*/
 
@@ -80,6 +82,7 @@ static void main_app_task(void *pvParameters);
  */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info);
 
+void main_app_start_firmware_download(void); 
 /* Public Functions ------------------------------------------------------*/ 
 
 /**
@@ -135,64 +138,79 @@ static void main_app_task(void *pvParameters){
 		if(xQueueReceive(main_app_queue_handle, &msg, portMAX_DELAY)){
 			switch(msg.msgID){
 				case MAIN_APP_MSG_STA_CONNECTED:
-				ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED");	
-				
-				// Sends message to the https task
-				strcpy((char*)url_register_device, ADDRESS_REGISTER_DEVICE);
-				strcpy((char*)payload_register_device, PAYLOAD_REGISTER_DEVICE);
-    			https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_register_device, payload_register_device, 0, NULL);
+					ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED");	
+					
+					if(state == MAIN_APP_IDLE){
+						state = MAIN_APP_CHECK_FW;
+					}
+					if(state == MAIN_APP_CHECK_FW){
+						//check if there is a update avaliable
+						strcpy((char*)url_string, ADDRESS_REGISTER_DEVICE);
+						strcpy((char*)payload_string, PAYLOAD_REGISTER_DEVICE);
+	    				https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_string, payload_string, 0, NULL);
+					} 
+					if(state == MAIN_APP_UPDATE_STATUS){
+						//Inform if the OTA was ok or not
+					}
 				break;
 	 			
 	 			case MAIN_APP_MSG_STA_DISCONNECTED:
-	 			ESP_LOGI(TAG, "MAIN_APP_MSG_STA_DISCONNECTED");
-	 			
-	 			// Sends mesage to the wifi task to connect again
-	 			wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
+		 			ESP_LOGI(TAG, "MAIN_APP_MSG_STA_DISCONNECTED");
+		 			
+		 			// Sends mesage to the wifi task to connect again
+		 			wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 	 			break;
 	 			
 	 			case MAIN_APP_MSG_HTTPS_CONNECTED:
-	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_CONNECTED");
+	 				ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_CONNECTED");
 	 			break;
 	 			
 	 			case MAIN_APP_MSG_HTTPS_RECEIVED:
-	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_RECEIVED");
-	 			if(msg.code == HTTPS_RECEIVED_MSG_SUCCESS){
-					ESP_LOGI(TAG, "MESSAGE RECEIVED: %.*s",msg.len, (char*) msg.data);
-					// Process the JSON response and fill the struct
-    				main_app_process_response((char*) msg.data, msg.len, &firmware_info);
-				 }
-				 else{
-					ESP_LOGI(TAG,"HTTPS ERROR CODE %d",msg.code);
-				}
+		 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_RECEIVED");
+		 			if(msg.code == HTTPS_RECEIVED_MSG_SUCCESS){
+						 ESP_LOGI(TAG, "MESSAGE RECEIVED: %.*s",msg.len, (char*) msg.data);
+						 
+						 if(state == MAIN_APP_CHECK_FW){
+	    					main_app_process_response((char*) msg.data, msg.len, &firmware_info);
+	    					 
+	    					 // Log the extracted firmware information
+	    					ESP_LOGI("Firmware Info", "Status: %s", firmware_info.status);
+				    		if (strcmp(firmware_info.status, VERSION_OUTDATED) == 0) {
+				        		ESP_LOGI("Firmware Info", "Version: %s", firmware_info.version);
+				        		ESP_LOGI("Firmware Info", "Author: %s", firmware_info.author);
+				        		ESP_LOGI("Firmware Info", "Hardware Model: %s", firmware_info.hardwareModel);
+				        		ESP_LOGI("Firmware Info", "Integrity Hash: %s", firmware_info.integrityHash);
+				        		ESP_LOGI("Firmware Info", "Timestamp: %s", firmware_info.timestamp);
+				        		ESP_LOGI("Firmware Info", "Description: %s", firmware_info.description);
+				        		ESP_LOGI("Firmware Info", "CID: %s", firmware_info.cid);
+				        		state = MAIN_APP_DOWNLOAD_FW;
+				    		}				 
+						 }
+						 else if(state == MAIN_APP_DOWNLOAD_FW){
+							// Process the download
+						 }
+					 }
+					 else{
+						ESP_LOGI(TAG,"HTTPS ERROR CODE %d",msg.code);
+					}
 	 			break;
 	 			
 	 			case MAIN_APP_MSG_HTTPS_DISCONNECTED:
-	 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
+		 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
+		 			if(state == MAIN_APP_DOWNLOAD_FW){
+						 main_app_start_firmware_download();
+					 }
 	 			break;
 	 			
 	 			default:
-                ESP_LOGI(TAG, "Unknown message ID");
+                	ESP_LOGI(TAG, "Unknown message ID");
                 break;
 			}
 			
 			// Release memory allocated for the strings
 			if(msg.data){
 				free((void*)msg.data);
-			}
-			
-			if(msg.code == HTTPS_RECEIVED_MSG_SUCCESS){
-			    // Log the extracted firmware information
-    			ESP_LOGI("Firmware Info", "Status: %s", firmware_info.status);
-			    if (strcmp(firmware_info.status, "Update available") == 0) {
-			        ESP_LOGI("Firmware Info", "Version: %s", firmware_info.version);
-			        ESP_LOGI("Firmware Info", "Author: %s", firmware_info.author);
-			        ESP_LOGI("Firmware Info", "Hardware Model: %s", firmware_info.hardwareModel);
-			        ESP_LOGI("Firmware Info", "Integrity Hash: %s", firmware_info.integrityHash);
-			        ESP_LOGI("Firmware Info", "Timestamp: %s", firmware_info.timestamp);
-			        ESP_LOGI("Firmware Info", "Description: %s", firmware_info.description);
-			        ESP_LOGI("Firmware Info", "CID: %s", firmware_info.cid);
-			    }
-			}
+			}			
 		}
 	}
 }
@@ -225,7 +243,7 @@ BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, co
 	}
 	return result;
 }
-
+	
 /**
  * @brief Process the HTTP response and extract firmware information.
  * @param response The response string from the server.
@@ -233,6 +251,7 @@ BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, co
  * @param firmware_info Pointer to the firmware metadata information structure.
  */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info){
+    
     // Check if the response is a known plain text message
     if (strstr(response, ERROR_HW_NOT_FOUND) || strstr(response, VERSION_UPDATED)) {
         strncpy(firmware_info->status, response, len);
@@ -291,11 +310,18 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
             }
             if (cJSON_IsString(cid) && (cid->valuestring != NULL)) {
                 strncpy(firmware_info->cid, cid->valuestring, sizeof(firmware_info->cid) - 1);
-            }
+            }	
         }
     }
 
     // Free the JSON object
     cJSON_Delete(json);
 }
+
+void main_app_start_firmware_download(void){
+	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
+	strcpy((char*)payload_string, firmware_info.cid);
+	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, payload_string, 0, NULL);
+}
+
  /** @} */
