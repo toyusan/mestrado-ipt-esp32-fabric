@@ -1,14 +1,14 @@
 /**
 *************************************************************************
-* @file			main.c
-* @brief		Source file for the main.c module.
-* @details		This file contains the implementation of functions for 
-*				the main.c module, including initialization, 
-*				configuration, and control functions.
-* @author   	Airton Y. C. Toyofuku
-* @date			9 de jun. de 2024
-* @version		1.0.0
-* @note			Toyotech - All rights reserved
+* @file       main.c
+* @brief      Source file for the main.c module.
+* @details    This file contains the implementation of functions for 
+*             the main.c module, including initialization, 
+*             configuration, and control functions.
+* @author     Airton Y. C. Toyofuku
+* @version    1.0.0
+* @date       9 de jun. de 2024
+* @copyright  Toyotech - All rights reserved
 *************************************************************************
 */
 
@@ -44,33 +44,49 @@
 #include "main_app.h"
 #include "api/wifi_app.h"
 #include "api/https_app.h"
+#include "api/fw_update.h"
 
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
 
-
 /* Private variables -----------------------------------------------------*/
-    			
-// Tag used for ESP serial console msgs
+                
+/**
+ * @brief Tag used for ESP serial console messages
+ */
 static const char TAG [] = "main_app"; 
 
-// Queue handle used to manipulate the main queue of events
+/**
+ * @brief Queue handle used to manipulate the main queue of events
+ */
 static QueueHandle_t main_app_queue_handle;
 
+/**
+ * @brief Structure to hold firmware metadata information
+ */
 static firmware_metadata_info_t firmware_info = {0};
 
+/**
+ * @brief Current state of the main application
+ */
 main_app_state_e state = MAIN_APP_IDLE;
 
-// Strings for the https communication
+/**
+ * @brief String buffer for the URL used in HTTPS communication
+ */
 char url_string[URL_LEN] = {0};
+
+/**
+ * @brief String buffer for the payload used in HTTPS communication
+ */
 char payload_string[PAYLOAD_LEN] = {0};
 
 /* Function prototypes ---------------------------------------------------*/
 
 /**
- * @brief  Main task for the Main application  
- * @param  pvParameters parameter which can be passed to the task
+ * @brief Main task for the Main application  
+ * @param pvParameters parameter which can be passed to the task
  */
 static void main_app_task(void *pvParameters);
 
@@ -82,12 +98,20 @@ static void main_app_task(void *pvParameters);
  */
 void main_app_process_response(const char *response, int len, firmware_metadata_info_t *firmware_info);
 
+/**
+ * @brief Starts the firmware download.
+ */
 void main_app_start_firmware_download(void); 
+
 /* Public Functions ------------------------------------------------------*/ 
 
 /**
  * @defgroup main.c Public Functions
  * @{
+ */
+
+/**
+ * @brief Main application entry point.
  */
 void app_main(void){
 	
@@ -125,9 +149,9 @@ void app_main(void){
  * @{
  */
  
-  /**
- * @brief  Main task for the  application  
- * @param  pvParameters parameter which can be passed to the task
+/**
+ * @brief Main task for the application  
+ * @param pvParameters parameter which can be passed to the task
  */
 static void main_app_task(void *pvParameters){
 	main_app_queue_message_t msg;
@@ -144,20 +168,20 @@ static void main_app_task(void *pvParameters){
 						state = MAIN_APP_CHECK_FW;
 					}
 					if(state == MAIN_APP_CHECK_FW){
-						//check if there is a update avaliable
+						// Check if there is an update available
 						strcpy((char*)url_string, ADDRESS_REGISTER_DEVICE);
 						strcpy((char*)payload_string, PAYLOAD_REGISTER_DEVICE);
 	    				https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_string, payload_string, 0, NULL);
 					} 
 					if(state == MAIN_APP_UPDATE_STATUS){
-						//Inform if the OTA was ok or not
+						// Inform if the OTA was ok or not
 					}
 				break;
 	 			
 	 			case MAIN_APP_MSG_STA_DISCONNECTED:
 		 			ESP_LOGI(TAG, "MAIN_APP_MSG_STA_DISCONNECTED");
 		 			
-		 			// Sends mesage to the wifi task to connect again
+		 			// Sends message to the wifi task to connect again
 		 			wifi_app_send_message(WIFI_APP_MSG_CONNECTING_STA);
 	 			break;
 	 			
@@ -202,6 +226,10 @@ static void main_app_task(void *pvParameters){
 					 }
 	 			break;
 	 			
+	 			case MAIN_APP_FW_DONWLOADED:
+	 				ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
+	 			break;
+	 			
 	 			default:
                 	ESP_LOGI(TAG, "Unknown message ID");
                 break;
@@ -217,9 +245,11 @@ static void main_app_task(void *pvParameters){
 
 /**
  * @brief Sends a message to the queue
- * @param msgID messae ID from the wifi_app_message_e enum
- * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFalse
- * @note Expand the parameter list based on your requirements e.g. how you've expanded the wifi_app_queue_message_t. 
+ * @param msgID Message ID from the wifi_app_message_e enum
+ * @param code Code associated with the message
+ * @param len Length of the data
+ * @param data Pointer to the data
+ * @return pdTRUE if an item was successfully sent to the queue, otherwise pdFALSE
  */
 BaseType_t main_app_send_message(main_app_message_e msgID, int code, int len, const char* data){
 	static main_app_queue_message_t msg;
@@ -318,6 +348,9 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
     cJSON_Delete(json);
 }
 
+/**
+ * @brief Starts the firmware download.
+ */
 void main_app_start_firmware_download(void){
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
 	strcat((char*)url_string, firmware_info.cid);
@@ -325,4 +358,4 @@ void main_app_start_firmware_download(void){
 	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, NULL, 0, NULL);
 }
 
- /** @} */
+/** @} */

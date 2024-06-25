@@ -1,14 +1,14 @@
 /**
 *************************************************************************
-* @file			https_app.c
-* @brief		Source file for the https_app.c module.
-* @details		This file contains the implementation of functions for 
-*				the https_app.c module, including initialization, 
-*				configuration, and control functions.
-* @author   	Airton Y. C. Toyofuku
-* @date			15 de jun. de 2024
-* @version		1.0.0
-* @note			Toyotech - All rights reserved
+* @file       https_app.c
+* @brief      Source file for the https_app.c module.
+* @details    This file contains the implementation of functions for 
+*             the https_app.c module, including initialization, 
+*             configuration, and control functions.
+* @author     Airton Y. C. Toyofuku
+* @version    1.0.0
+* @date       15 de jun. de 2024
+* @note       Toyotech - All rights reserved
 *************************************************************************
 */
 
@@ -36,22 +36,43 @@
 #include "portmacro.h"
 #include "tasks_common.h"
 #include "main_app.h"
-#include "api/wifi_app.h"
 #include "api/https_app.h"
+
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
 
 /* Private variables -----------------------------------------------------*/
+/**
+ * @brief Tag used for ESP serial console messages
+ */
 static const char TAG [] = "https_app";
 
-// Queue handle used to manipulate the main queue of events
+/**
+ * @brief Queue handle used to manipulate the main queue of events
+ */
 static QueueHandle_t https_app_queue_handle;
 
+/**
+ * @brief Buffer to store the response from the HTTPS request
+ */
 static char g_response_buffer[HTTPS_RESPONSE_BUFFER_SIZE];
+
+/**
+ * @brief Buffer to store the response to be sent
+ */
 static char g_response_buffer_to_send[HTTPS_RESPONSE_BUFFER_SIZE];
-static int  g_len = 0;
-static int  g_fw_flag = 0;
+
+/**
+ * @brief Length of the response
+ */
+static int g_len = 0;
+
+/**
+ * @brief Flag to indicate firmware download
+ */
+static int g_fw_flag = 0;
+
 /* Function prototypes ---------------------------------------------------*/
 
 /**
@@ -68,7 +89,12 @@ static void https_app_task(void *pvParameters);
  */
 static esp_err_t https_app_perform_request(const char *url, const char *payload);
 
+/**
+ * @brief Internal function to download firmware
+ * @param url URL to download the firmware
+ */
 static void http_app_download_firmware(const char *url);
+
 /* Public Functions ------------------------------------------------------*/
 
 /**
@@ -304,6 +330,10 @@ static esp_err_t https_app_perform_request(const char *url, const char *payload)
     return err;
 }
 
+/**
+ * @brief Internal function to download firmware
+ * @param url URL to download the firmware
+ */
 static void http_app_download_firmware(const char *url){
 	g_fw_flag = 1;
 	
@@ -336,7 +366,7 @@ static void http_app_download_firmware(const char *url){
         g_fw_flag = 0;
         return;
     }
-    ESP_LOGI(TAG, "HTTP CONTENT LENGHT: %d", content_length);
+    ESP_LOGI(TAG, "HTTP CONTENT LENGTH: %d", content_length);
 
     const esp_partition_t *storage_partition  = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
     if (storage_partition  == NULL) {
@@ -371,9 +401,10 @@ static void http_app_download_firmware(const char *url){
         return;
     }
 
-    ESP_LOGI(TAG, "FIRWMARE DOWNLOADED SUCCESFULLY");
+    ESP_LOGI(TAG, "FIRMWARE DOWNLOADED SUCCESSFULLY");
     esp_http_client_cleanup(client);
     g_fw_flag = 0;
+    main_app_send_message(MAIN_APP_FW_DONWLOADED, 0, 0,NULL);
 }
 
 /** @} */
