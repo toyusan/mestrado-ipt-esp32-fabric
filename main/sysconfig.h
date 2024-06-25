@@ -33,7 +33,7 @@ extern "C" {
 #define PERSONAL_PASS "30082023"
 
 // HTTPS Server definitions
-#define URL_LEN 50
+#define URL_LEN 255
 #define PAYLOAD_LEN 255
 
 #define HTTPS_BLOCKCHAIN_SERVER_URL "https://18.230.239.105:3000"

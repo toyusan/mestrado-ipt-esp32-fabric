@@ -320,8 +320,9 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
 
 void main_app_start_firmware_download(void){
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
-	strcpy((char*)payload_string, firmware_info.cid);
-	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, payload_string, 0, NULL);
+	strcat((char*)url_string, firmware_info.cid);
+	ESP_LOGI(TAG, "FW url: %s",url_string);
+	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, NULL, 0, NULL);
 }
 
  /** @} */
