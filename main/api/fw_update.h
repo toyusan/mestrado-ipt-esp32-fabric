@@ -43,13 +43,14 @@ typedef struct {
  */
 typedef enum fw_update_ret {
     FW_UPDATE_OK = 0,                /**< Firmware update successful */
-    FW_UPDATE_PARTION_ERROR,         /**< Error with the firmware partition */
+    FW_UPDATE_PARTION_NOT_FOUND,
+    FW_UPDATE_PARTION_NOT_INIT,
     FW_UPDATE_PARTION_READ_ERROR,
     FW_UPDATE_PARTION_WRITE_ERROR,
     FW_UPDATE_DECRYPT_ERROR,
-    FW_UPDATE_WRITE_ERROR,
+    FW_UPDATE_PARTION_NOT_CLOSED,
     FW_UPDATE_HASH_ERROR,
-    FW_UPDATE_SET_BOOT_ERROR         /**< Error setting the boot partition */
+    FW_UPDATE_SET_PARTION_BOOT_ERROR         /**< Error setting the boot partition */
 } fw_update_ret_e;
 
 /* Public Function Prototypes -------------------------------------------------*/
@@ -63,6 +64,14 @@ typedef enum fw_update_ret {
  * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure
  */
 fw_update_ret_e decrypt_firmware_from_storage(int len);
+
+/**
+ * @brief Calculates the SHA-256 hash of a firmware in the OTA partition.
+ * @param len Length of the firmware.
+ * @param hash_buffer Buffer where the calculated hash will be stored.
+ * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure.
+ */
+fw_update_ret_e calculate_sha256_hash_from_ota(const char *hash_buffer);
 
 /**
  * @brief Applies the firmware update.

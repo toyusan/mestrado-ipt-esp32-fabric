@@ -343,6 +343,7 @@ static void http_app_download_firmware(const char *url){
         .event_handler = client_event_handler,
     };
 
+    ESP_LOGI(TAG, "INITIALIZE FIRMWARE DOWNLOAD");
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (client == NULL) {
         ESP_LOGE(TAG, "Failed to initialize HTTP connection");

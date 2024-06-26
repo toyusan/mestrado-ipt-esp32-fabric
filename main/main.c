@@ -228,10 +228,12 @@ static void main_app_task(void *pvParameters){
 	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
 	 				if(state == MAIN_APP_DECRYPT_FW){
 	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
-							 apply_firmware_update();
-							 state = MAIN_APP_IDLE;
+							 if(calculate_sha256_hash_from_ota(firmware_info.integrityHash) == FW_UPDATE_OK){
+							 	apply_firmware_update();
+							 }
 						 }
 	 				}
+	 				state = MAIN_APP_IDLE;
 	 			break;
 	 			
 	 			default:
