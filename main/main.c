@@ -227,7 +227,8 @@ static void main_app_task(void *pvParameters){
 	 			case MAIN_APP_FW_DONWLOADED:
 	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
 	 				if(state == MAIN_APP_DECRYPT_FW){
-	 					if(decrypt_and_verify_firmware_from_storage(msg.len) == FW_UPDATE_OK){
+	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
+							 apply_firmware_update();
 							 state = MAIN_APP_IDLE;
 						 }
 	 				}

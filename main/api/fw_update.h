@@ -24,6 +24,21 @@ extern "C" {
 
 /* Public Types --------------------------------------------------------------*/
 /**
+ * @brief Structure to hold firmware metadata information
+ */
+typedef struct {
+    char status[50];         /**< Status of the firmware */
+    char version[20];        /**< Firmware version */
+    char author[50];         /**< Author of the firmware */
+    char hardwareModel[50];  /**< Hardware model compatible with the firmware */
+    char integrityHash[255]; /**< Integrity hash of the firmware */
+    char timestamp[20];      /**< Timestamp of the firmware release */
+    char description[255];   /**< Description of the firmware */
+    char cid[255];           /**< CID of the firmware in IPFS */
+} firmware_metadata_info_t;
+
+
+/**
  * @brief Enumeration for firmware update return codes
  */
 typedef enum fw_update_ret {
@@ -31,7 +46,9 @@ typedef enum fw_update_ret {
     FW_UPDATE_PARTION_ERROR,         /**< Error with the firmware partition */
     FW_UPDATE_PARTION_READ_ERROR,
     FW_UPDATE_PARTION_WRITE_ERROR,
+    FW_UPDATE_DECRYPT_ERROR,
     FW_UPDATE_WRITE_ERROR,
+    FW_UPDATE_HASH_ERROR,
     FW_UPDATE_SET_BOOT_ERROR         /**< Error setting the boot partition */
 } fw_update_ret_e;
 
@@ -45,7 +62,7 @@ typedef enum fw_update_ret {
  * @brief Decrypts and verifies the firmware from storage.
  * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure
  */
-fw_update_ret_e decrypt_and_verify_firmware_from_storage(int len);
+fw_update_ret_e decrypt_firmware_from_storage(int len);
 
 /**
  * @brief Applies the firmware update.

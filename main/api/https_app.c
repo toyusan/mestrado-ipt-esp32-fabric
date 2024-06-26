@@ -37,6 +37,7 @@
 #include "tasks_common.h"
 #include "main_app.h"
 #include "api/https_app.h"
+#include "api/fw_update.h"
 
 /* Definitions ----------------------------------------------------------*/
 

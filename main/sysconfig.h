@@ -28,13 +28,13 @@ extern "C" {
 /**
  * @brief WiFi Configuration SSID
  */
-#define PERSONAL_SSID "Apto 172"
-//#define PERSONAL_SSID "iPhone Airton"
+//#define PERSONAL_SSID "Apto 172"
+#define PERSONAL_SSID "iPhone Airton"
 /**
  * @brief WiFi Configuration Password
  */
-#define PERSONAL_PASS "30082023"
-
+//#define PERSONAL_PASS "30082023"
+#define PERSONAL_PASS "2153818aa"
 
 /**
  * @brief AES-128 key used for encryption
@@ -130,20 +130,6 @@ extern const char client_key_pem_start[] asm("_binary_device_key_pem_start");
  * @brief Client private key end marker
  */
 extern const char client_key_pem_end[] asm("_binary_device_key_pem_end");
-
-/**
- * @brief Structure to hold firmware metadata information
- */
-typedef struct {
-    char status[50];         /**< Status of the firmware */
-    char version[20];        /**< Firmware version */
-    char author[50];         /**< Author of the firmware */
-    char hardwareModel[50];  /**< Hardware model compatible with the firmware */
-    char integrityHash[255]; /**< Integrity hash of the firmware */
-    char timestamp[20];      /**< Timestamp of the firmware release */
-    char description[255];   /**< Description of the firmware */
-    char cid[255];           /**< CID of the firmware in IPFS */
-} firmware_metadata_info_t;
 
 /* Public Function Prototypes -------------------------------------------------*/
 /**
