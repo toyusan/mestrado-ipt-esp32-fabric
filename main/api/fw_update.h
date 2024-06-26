@@ -29,6 +29,9 @@ extern "C" {
 typedef enum fw_update_ret {
     FW_UPDATE_OK = 0,                /**< Firmware update successful */
     FW_UPDATE_PARTION_ERROR,         /**< Error with the firmware partition */
+    FW_UPDATE_PARTION_READ_ERROR,
+    FW_UPDATE_PARTION_WRITE_ERROR,
+    FW_UPDATE_WRITE_ERROR,
     FW_UPDATE_SET_BOOT_ERROR         /**< Error setting the boot partition */
 } fw_update_ret_e;
 
@@ -42,7 +45,7 @@ typedef enum fw_update_ret {
  * @brief Decrypts and verifies the firmware from storage.
  * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure
  */
-fw_update_ret_e decrypt_and_verify_firmware_from_storage(void);
+fw_update_ret_e decrypt_and_verify_firmware_from_storage(int len);
 
 /**
  * @brief Applies the firmware update.

@@ -72,7 +72,7 @@ static const char TAG [] = "fw_update";
  * @brief Decrypts and verifies the firmware from storage.
  * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure
  */
-fw_update_ret_e decrypt_and_verify_firmware_from_storage(void){
+fw_update_ret_e decrypt_and_verify_firmware_from_storage(int len){
 	const esp_partition_t *storage_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
     const esp_partition_t *ota0_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, NULL);
 
@@ -80,56 +80,58 @@ fw_update_ret_e decrypt_and_verify_firmware_from_storage(void){
         ESP_LOGE(TAG, "Required partition not found");
         return FW_UPDATE_PARTION_ERROR;
     }
-
+	ESP_LOGI(TAG, "Required partition found successfully");
+	
     mbedtls_aes_context aes;
     mbedtls_aes_init(&aes);
     mbedtls_aes_setkey_dec(&aes, aes_key, 128);
     unsigned char iv[16];
     memcpy(iv, aes_iv, 16); // Inicializa o IV
 
-    mbedtls_md5_context md5_ctx;
-    mbedtls_md5_init(&md5_ctx);
-    mbedtls_md5_starts(&md5_ctx);
 
     uint8_t encrypted_data[16];
     uint8_t decrypted_data[16];
     size_t read_offset = 0;
-    size_t write_offset = 0;
 
     esp_ota_handle_t ota_handle;
-    esp_ota_begin(ota0_partition, OTA_SIZE_UNKNOWN, &ota_handle);
-
-    while (read_offset < storage_partition->size) {
-        size_t read_size = sizeof(encrypted_data);
-        esp_partition_read(storage_partition, read_offset, encrypted_data, read_size);
-
-        mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, read_size, iv, encrypted_data, decrypted_data);
-        mbedtls_md5_update(&md5_ctx, decrypted_data, read_size);
-
-        esp_ota_write(ota_handle, decrypted_data, read_size);
-        read_offset += read_size;
-        write_offset += read_size;
-
-        if (read_size < sizeof(encrypted_data)) {
-            break; // End of the data
+    esp_err_t err = esp_ota_begin(ota0_partition, OTA_SIZE_UNKNOWN, &ota_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_ota_begin failed: %s", esp_err_to_name(err));
+        return FW_UPDATE_PARTION_ERROR;
+    }
+	ESP_LOGI(TAG, "esp_ota_begin successfully");
+	
+    size_t read_size = sizeof(encrypted_data);
+    while (read_offset <= len) {    
+        err = esp_partition_read(storage_partition, read_offset, encrypted_data, read_size);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "esp_partition_read failed: %s", esp_err_to_name(err));
+            esp_ota_end(ota_handle);
+            return FW_UPDATE_PARTION_READ_ERROR;
         }
+        ESP_LOGI(TAG, "esp_partition_read successfully");
+        
+        mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, read_size, iv, encrypted_data, decrypted_data);
+        err = esp_ota_write(ota_handle, decrypted_data, read_size);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
+            esp_ota_end(ota_handle);
+            return FW_UPDATE_PARTION_WRITE_ERROR;
+        }
+        ESP_LOGI(TAG, "esp_ota_write successfully %d", read_offset);
+        
+        read_offset += read_size;
     }
 
-    unsigned char hash[16];
-    mbedtls_md5_finish(&md5_ctx, hash);
-    mbedtls_md5_free(&md5_ctx);
     mbedtls_aes_free(&aes);
+    ESP_LOGI(TAG, "mbedtls_aes_free");
 
-    ESP_LOGI(TAG, "MD5 hash of decrypted firmware: ");
-    for (int i = 0; i < 16; i++) {
-        ESP_LOGI(TAG, "%02x", hash[i]);
+    err = esp_ota_end(ota_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_ota_end failed: %s", esp_err_to_name(err));
+        return FW_UPDATE_WRITE_ERROR;
     }
-
-    esp_ota_end(ota_handle);
-
-    // Verificação adicional do hash pode ser realizada aqui
-    // ...
-
+    
     ESP_LOGI(TAG, "Firmware decrypted and verified successfully");
     return FW_UPDATE_OK;
 }

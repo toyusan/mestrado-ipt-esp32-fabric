@@ -44,6 +44,7 @@ typedef enum main_app_state {
     MAIN_APP_IDLE,           /**< Idle state */
     MAIN_APP_CHECK_FW,       /**< Checking firmware state */
     MAIN_APP_DOWNLOAD_FW,    /**< Downloading firmware state */
+    MAIN_APP_DECRYPT_FW,
     MAIN_APP_UPDATE_STATUS,  /**< Updating status state */
 } main_app_state_e;
 

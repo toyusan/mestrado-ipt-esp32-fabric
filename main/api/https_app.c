@@ -404,7 +404,7 @@ static void http_app_download_firmware(const char *url){
     ESP_LOGI(TAG, "FIRMWARE DOWNLOADED SUCCESSFULLY");
     esp_http_client_cleanup(client);
     g_fw_flag = 0;
-    main_app_send_message(MAIN_APP_FW_DONWLOADED, 0, 0,NULL);
+    main_app_send_message(MAIN_APP_FW_DONWLOADED, 0, write_offset,NULL);
 }
 
 /** @} */

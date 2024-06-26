@@ -29,11 +29,12 @@ extern "C" {
  * @brief WiFi Configuration SSID
  */
 #define PERSONAL_SSID "Apto 172"
-
+//#define PERSONAL_SSID "iPhone Airton"
 /**
  * @brief WiFi Configuration Password
  */
 #define PERSONAL_PASS "30082023"
+
 
 /**
  * @brief AES-128 key used for encryption

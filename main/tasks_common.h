@@ -27,7 +27,7 @@ extern "C" {
 /** 
  * @brief Stack size for the main application task
  */
-#define MAIN_APP_TASK_STACK_SIZE        2048
+#define MAIN_APP_TASK_STACK_SIZE        8192
 
 /**
  * @brief Priority for the main application task

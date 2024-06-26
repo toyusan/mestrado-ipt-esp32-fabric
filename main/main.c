@@ -210,9 +210,6 @@ static void main_app_task(void *pvParameters){
 				        		state = MAIN_APP_DOWNLOAD_FW;
 				    		}				 
 						 }
-						 else if(state == MAIN_APP_DOWNLOAD_FW){
-							// Process the download
-						 }
 					 }
 					 else{
 						ESP_LOGI(TAG,"HTTPS ERROR CODE %d",msg.code);
@@ -223,11 +220,17 @@ static void main_app_task(void *pvParameters){
 		 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
 		 			if(state == MAIN_APP_DOWNLOAD_FW){
 						 main_app_start_firmware_download();
+						 state = MAIN_APP_DECRYPT_FW;
 					 }
 	 			break;
 	 			
 	 			case MAIN_APP_FW_DONWLOADED:
-	 				ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_DISCONNECTED");
+	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
+	 				if(state == MAIN_APP_DECRYPT_FW){
+	 					if(decrypt_and_verify_firmware_from_storage(msg.len) == FW_UPDATE_OK){
+							 state = MAIN_APP_IDLE;
+						 }
+	 				}
 	 			break;
 	 			
 	 			default:
