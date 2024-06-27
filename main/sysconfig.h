@@ -25,16 +25,17 @@ extern "C" {
 
 /* Public Types --------------------------------------------------------------*/
 
+#define PRINT_INFO 1
 /**
  * @brief WiFi Configuration SSID
  */
-//#define PERSONAL_SSID "Apto 172"
-#define PERSONAL_SSID "iPhone Airton"
+#define PERSONAL_SSID "Apto 172"
+//#define PERSONAL_SSID "iPhone Airton"
 /**
  * @brief WiFi Configuration Password
  */
-//#define PERSONAL_PASS "30082023"
-#define PERSONAL_PASS "2153818aa"
+#define PERSONAL_PASS "30082023"
+//#define PERSONAL_PASS "2153818aa"
 
 /**
  * @brief AES-128 key used for encryption

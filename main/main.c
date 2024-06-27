@@ -192,7 +192,7 @@ static void main_app_task(void *pvParameters){
 	 			case MAIN_APP_MSG_HTTPS_RECEIVED:
 		 			ESP_LOGI(TAG, "MAIN_APP_MSG_HTTPS_RECEIVED");
 		 			if(msg.code == HTTPS_RECEIVED_MSG_SUCCESS){
-						 ESP_LOGI(TAG, "MESSAGE RECEIVED: %.*s",msg.len, (char*) msg.data);
+						 ESP_LOGI(TAG, "Message Received: %.*s",msg.len, (char*) msg.data);
 						 
 						 if(state == MAIN_APP_CHECK_FW){
 	    					main_app_process_response((char*) msg.data, msg.len, &firmware_info);
@@ -227,8 +227,11 @@ static void main_app_task(void *pvParameters){
 	 			case MAIN_APP_FW_DONWLOADED:
 	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
 	 				if(state == MAIN_APP_DECRYPT_FW){
+						ESP_LOGI(TAG, "Initialize Firmware Decrypt");
 	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
+							 ESP_LOGI(TAG, "Initialize Firmware Hash Check");
 							 if(calculate_sha256_hash_from_ota(firmware_info.integrityHash) == FW_UPDATE_OK){
+								ESP_LOGI(TAG, "Initialize Firmware Update");
 							 	apply_firmware_update();
 							 }
 						 }
@@ -360,7 +363,7 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
 void main_app_start_firmware_download(void){
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
 	strcat((char*)url_string, firmware_info.cid);
-	ESP_LOGI(TAG, "FW url: %s",url_string);
+	ESP_LOGI(TAG, "Firmware url: %s",url_string);
 	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, NULL, 0, NULL);
 }
 

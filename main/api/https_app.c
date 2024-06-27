@@ -368,7 +368,7 @@ static void http_app_download_firmware(const char *url){
         g_fw_flag = 0;
         return;
     }
-    ESP_LOGI(TAG, "HTTP CONTENT LENGTH: %d", content_length);
+    ESP_LOGI(TAG, "HTTP Content Length: %d", content_length);
 
     const esp_partition_t *storage_partition  = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
     if (storage_partition  == NULL) {

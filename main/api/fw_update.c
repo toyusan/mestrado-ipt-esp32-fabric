@@ -94,8 +94,6 @@ fw_update_ret_e decrypt_firmware_from_storage(int len){
     esp_err_t err = ESP_OK;
 	esp_ota_handle_t ota_handle;
 	
-	ESP_LOGI(TAG, "INITIALIZE FIRMWARE DECRYPT");
-	
 	// Gets the pointers for the partitions
 	const esp_partition_t *storage_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
     const esp_partition_t *ota0_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, NULL);
@@ -123,10 +121,27 @@ fw_update_ret_e decrypt_firmware_from_storage(int len){
             esp_ota_end(ota_handle);
             return FW_UPDATE_PARTION_READ_ERROR;
         }
-        //ESP_LOGI(TAG, "esp_partition_read: %d", read_offset);
-        
+#if PRINT_INFO
+        ESP_LOGI(TAG, "esp_partition_read: %d", read_offset);
+#endif
         // Decrypt the data from the storage partition
         mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, read_size, iv, encrypted_data, decrypted_data);
+		// Print the calculated hash for debugging
+
+#if PRINT_INFO    	
+    	ESP_LOGI(TAG, "encrypted_data:");
+    	for (int i = 0; i < 16; i++) {
+        	printf("%02x", encrypted_data[i]);
+    	}
+    	printf("\n");
+
+    	// Print the expected hash for debugging
+    	ESP_LOGI(TAG, "decrypted_data:");
+    	for (int i = 0; i < 16; i++) {
+        	printf("%02x", decrypted_data[i]);
+    	}
+    	printf("\n");
+#endif // PRINT_INFO
 
        // If it is the last block, remove padding
 		decrypted_size = read_size;
@@ -149,8 +164,9 @@ fw_update_ret_e decrypt_firmware_from_storage(int len){
             esp_ota_end(ota_handle);
             return FW_UPDATE_PARTION_WRITE_ERROR;
         }
-        //ESP_LOGI(TAG, "esp_ota_write: %d", decrypted_size);
-        
+#if PRINT_INFO
+        ESP_LOGI(TAG, "esp_ota_write: %d", decrypted_size);
+#endif
         // Update the offset to the next block
         read_offset += read_size;
     }
@@ -188,8 +204,6 @@ fw_update_ret_e calculate_sha256_hash_from_ota(const char *integrity_hash) {
     mbedtls_sha256_context sha256_ctx;
     mbedtls_sha256_init(&sha256_ctx);
     mbedtls_sha256_starts(&sha256_ctx, 0); // 0 para SHA-256
-    
-    ESP_LOGI(TAG, "INITIALIZE FIRMWARE HASH CHECK");
     
 	// Convert the string into an array
 	char expected_hash[32] = {0x00};
@@ -249,10 +263,7 @@ fw_update_ret_e calculate_sha256_hash_from_ota(const char *integrity_hash) {
  * @brief Applies the firmware update.
  * @return fw_update_ret_e FW_UPDATE_OK on success, or an error code on failure
  */
-fw_update_ret_e apply_firmware_update() {
-	
-	ESP_LOGI(TAG, "INITIALIZE FIRMWARE UPDATE");
-	
+fw_update_ret_e apply_firmware_update() {	
     const esp_partition_t *ota0_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, NULL);
     if (ota0_partition == NULL) {
         ESP_LOGE(TAG, "OTA0 partition not found");
