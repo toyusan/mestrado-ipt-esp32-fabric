@@ -46,6 +46,9 @@
 #include "api/https_app.h"
 #include "api/fw_update.h"
 
+// Tests Includes
+#include "main_test.h"
+
 /* Definitions ----------------------------------------------------------*/
 
 /* Typedefs --------------------------------------------------------------*/
@@ -82,6 +85,7 @@ char url_string[URL_LEN] = {0};
  */
 char payload_string[PAYLOAD_LEN] = {0};
 
+
 /* Function prototypes ---------------------------------------------------*/
 
 /**
@@ -102,6 +106,7 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
  * @brief Starts the firmware download.
  */
 void main_app_start_firmware_download(void); 
+
 
 /* Public Functions ------------------------------------------------------*/ 
 
@@ -126,6 +131,9 @@ void app_main(void){
 	printf(APP_HEADER);
 	printf(APP_VERSION);
 	printf(APP_HEADER);
+	
+	// Select the test to be executed
+	main_test_init();
 	
     // Create message queue
     main_app_queue_handle = xQueueCreate(3, sizeof(main_app_queue_message_t));
@@ -162,13 +170,15 @@ static void main_app_task(void *pvParameters){
 		if(xQueueReceive(main_app_queue_handle, &msg, portMAX_DELAY)){
 			switch(msg.msgID){
 				case MAIN_APP_MSG_STA_CONNECTED:
+				case MAIN_APP_RELOAD:
 					ESP_LOGI(TAG, "MAIN_APP_MSG_STA_CONNECTED");	
 					
 					if(state == MAIN_APP_IDLE){
 						state = MAIN_APP_CHECK_FW;
 					}
+					// Check if there is an update available
 					if(state == MAIN_APP_CHECK_FW){
-						// Check if there is an update available
+						main_test_update_log("INIT METADATA ACCESS");
 						strcpy((char*)url_string, ADDRESS_REGISTER_DEVICE);
 						strcpy((char*)payload_string, PAYLOAD_REGISTER_DEVICE);
 	    				https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_string, payload_string, 0, NULL);
@@ -200,6 +210,7 @@ static void main_app_task(void *pvParameters){
 	    					 // Log the extracted firmware information
 	    					ESP_LOGI("Firmware Info", "Status: %s", firmware_info.status);
 				    		if (strcmp(firmware_info.status, VERSION_OUTDATED) == 0) {
+								main_test_update_log("RECEIVED METADA");
 				        		ESP_LOGI("Firmware Info", "Version: %s", firmware_info.version);
 				        		ESP_LOGI("Firmware Info", "Author: %s", firmware_info.author);
 				        		ESP_LOGI("Firmware Info", "Hardware Model: %s", firmware_info.hardwareModel);
@@ -227,12 +238,16 @@ static void main_app_task(void *pvParameters){
 	 			case MAIN_APP_FW_DONWLOADED:
 	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
 	 				if(state == MAIN_APP_DECRYPT_FW){
-						ESP_LOGI(TAG, "Initialize Firmware Decrypt");
+						main_test_update_log("Initialize Firmware Decrypt");
 	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
-							 ESP_LOGI(TAG, "Initialize Firmware Hash Check");
+							 main_test_update_log("Initialize Firmware Decrypt OK");
+							 main_test_update_log("Initialize Firmware Hash Check");
 							 if(calculate_sha256_hash_from_ota(firmware_info.integrityHash) == FW_UPDATE_OK){
+								main_test_update_log("Initialize Firmware Hash Check OK");
 								ESP_LOGI(TAG, "Initialize Firmware Update");
-							 	apply_firmware_update();
+							 	//apply_firmware_update();
+							 	main_test_update_loop();
+							 	
 							 }
 						 }
 	 				}
@@ -361,6 +376,7 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
  * @brief Starts the firmware download.
  */
 void main_app_start_firmware_download(void){
+	main_test_update_log("INIT FIRMWARE IPFS DOWNLOAD");
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
 	strcat((char*)url_string, firmware_info.cid);
 	ESP_LOGI(TAG, "Firmware url: %s",url_string);

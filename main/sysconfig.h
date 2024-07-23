@@ -25,12 +25,22 @@ extern "C" {
 
 /* Public Types --------------------------------------------------------------*/
 
-#define PRINT_INFO 1
+/**
+ * @brief Define if it has to use the real certificate or the tests ones
+ */
+#define CERTIFICATE_TEST 1
+
+/**
+ * @brief Prints the Decript process
+ */
+#define PRINT_INFO 0
+
 /**
  * @brief WiFi Configuration SSID
  */
 #define PERSONAL_SSID "Apto 172"
 //#define PERSONAL_SSID "iPhone Airton"
+
 /**
  * @brief WiFi Configuration Password
  */

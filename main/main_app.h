@@ -34,7 +34,8 @@ typedef enum main_app_message {
     MAIN_APP_MSG_HTTPS_CONNECTED,    /**< HTTPS connected */
     MAIN_APP_MSG_HTTPS_RECEIVED,     /**< HTTPS message received */
     MAIN_APP_MSG_HTTPS_DISCONNECTED, /**< HTTPS disconnected */
-    MAIN_APP_FW_DONWLOADED           /**< Firmware downloaded */
+    MAIN_APP_FW_DONWLOADED,           /**< Firmware downloaded */
+    MAIN_APP_RELOAD
 } main_app_message_e;
 
 /**

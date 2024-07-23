@@ -248,7 +248,7 @@ esp_err_t client_event_handler(esp_http_client_event_t *evt) {
             ESP_LOGI(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
             break;
         case HTTP_EVENT_ON_DATA:
-            ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+           // ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
             if(!g_fw_flag){
             	if(g_len + evt->data_len < HTTPS_RESPONSE_BUFFER_SIZE){
 					strncat(g_response_buffer_to_send, (char*)evt->data, evt->data_len);
@@ -393,7 +393,7 @@ static void http_app_download_firmware(const char *url){
             return;
         }
         write_offset += bytes_read;
-        ESP_LOGI(TAG, "DATA WRITE: %d", write_offset);
+        //ESP_LOGI(TAG, "DATA WRITE: %d", write_offset);
     }
 
     if (bytes_read < 0) {
