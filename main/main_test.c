@@ -32,7 +32,7 @@ static const char TAG [] = "TEST";
 /**
  * @brief Variable to count the test loop
  */
-uint8_t test_loop = TEST_LOOP;
+int8_t test_loop = TEST_LOOP;
 
 /**
  * @brief Variable to control the test type

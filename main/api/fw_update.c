@@ -51,7 +51,7 @@
 /**
  * @brief AES-128 key and IV used for encryption
  */
-static const unsigned char aes_key[16] = AES_KEY;
+static const unsigned char aes_key[KEY_SIZE] = AES_KEY;
 static const unsigned char aes_iv[16] = AES_IV;
 
 static int g_read_offset = 0;
@@ -81,7 +81,7 @@ fw_update_ret_e decrypt_firmware_from_storage(int len){
 	
 	mbedtls_aes_context aes;
     mbedtls_aes_init(&aes);
-    mbedtls_aes_setkey_dec(&aes, aes_key, 128);
+    mbedtls_aes_setkey_dec(&aes, aes_key, KEY_SIZE * 8);
     unsigned char iv[16];
     memcpy(iv, aes_iv, 16); // Inicializa o IV
 

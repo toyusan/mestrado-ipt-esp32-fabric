@@ -31,7 +31,7 @@ extern "C" {
 /** 
  * @brief Firmware version identifier
  */
-#define FIRMWARE_VERSION  "1.1"
+#define FIRMWARE_VERSION  "4.1"
 
 /**
  * @brief Converts a macro value to a string

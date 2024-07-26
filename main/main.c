@@ -178,7 +178,7 @@ static void main_app_task(void *pvParameters){
 					}
 					// Check if there is an update available
 					if(state == MAIN_APP_CHECK_FW){
-						main_test_update_log("INIT METADATA ACCESS");
+						main_test_update_log("INIT METADATA ACCESS T0");
 						strcpy((char*)url_string, ADDRESS_REGISTER_DEVICE);
 						strcpy((char*)payload_string, PAYLOAD_REGISTER_DEVICE);
 	    				https_app_send_message(HTTPS_APP_MSG_SEND_REQUEST, url_string, payload_string, 0, NULL);
@@ -210,7 +210,7 @@ static void main_app_task(void *pvParameters){
 	    					 // Log the extracted firmware information
 	    					ESP_LOGI("Firmware Info", "Status: %s", firmware_info.status);
 				    		if (strcmp(firmware_info.status, VERSION_OUTDATED) == 0) {
-								main_test_update_log("RECEIVED METADA");
+								main_test_update_log("RECEIVED METADATA T1 ");
 				        		ESP_LOGI("Firmware Info", "Version: %s", firmware_info.version);
 				        		ESP_LOGI("Firmware Info", "Author: %s", firmware_info.author);
 				        		ESP_LOGI("Firmware Info", "Hardware Model: %s", firmware_info.hardwareModel);
@@ -233,23 +233,28 @@ static void main_app_task(void *pvParameters){
 						 main_app_start_firmware_download();
 						 state = MAIN_APP_DECRYPT_FW;
 					 }
+					 main_test_update_loop(); // For Certificate Error test
 	 			break;
 	 			
 	 			case MAIN_APP_FW_DONWLOADED:
 	 				ESP_LOGI(TAG, "MAIN_APP_FW_DONWLOADED");
 	 				if(state == MAIN_APP_DECRYPT_FW){
-						main_test_update_log("Initialize Firmware Decrypt");
+						main_test_update_log("INIT FIRMWARE DOWNLOADED T3");
 	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
-							 main_test_update_log("Initialize Firmware Decrypt OK");
-							 main_test_update_log("Initialize Firmware Hash Check");
+							 main_test_update_log("INIT DECRYPT PROCESS T4");
+							 //main_test_update_log("Initialize Firmware Hash Check");
 							 if(calculate_sha256_hash_from_ota(firmware_info.integrityHash) == FW_UPDATE_OK){
-								main_test_update_log("Initialize Firmware Hash Check OK");
+								main_test_update_log("INIT FIRMWRARE HASH T5");
 								ESP_LOGI(TAG, "Initialize Firmware Update");
 							 	//apply_firmware_update();
 							 	main_test_update_loop();
 							 	
 							 }
+							 else
+							 	main_test_update_loop(); // For HASH Error test
 						 }
+						 else
+						 	main_test_update_loop(); // For Decrypt Error test
 	 				}
 	 				state = MAIN_APP_IDLE;
 	 			break;
@@ -376,7 +381,7 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
  * @brief Starts the firmware download.
  */
 void main_app_start_firmware_download(void){
-	main_test_update_log("INIT FIRMWARE IPFS DOWNLOAD");
+	main_test_update_log("INIT FIRMWARE IPFS DOWNLOAD T2");
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
 	strcat((char*)url_string, firmware_info.cid);
 	ESP_LOGI(TAG, "Firmware url: %s",url_string);
