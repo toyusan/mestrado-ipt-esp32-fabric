@@ -233,7 +233,7 @@ static void main_app_task(void *pvParameters){
 						 main_app_start_firmware_download();
 						 state = MAIN_APP_DECRYPT_FW;
 					 }
-					 main_test_update_loop(); // For Certificate Error test
+					 //main_test_update_loop(); // For Certificate Error test
 	 			break;
 	 			
 	 			case MAIN_APP_FW_DONWLOADED:
@@ -242,7 +242,6 @@ static void main_app_task(void *pvParameters){
 						main_test_update_log("INIT FIRMWARE DOWNLOADED T3");
 	 					if(decrypt_firmware_from_storage(msg.len) == FW_UPDATE_OK){
 							 main_test_update_log("INIT DECRYPT PROCESS T4");
-							 //main_test_update_log("Initialize Firmware Hash Check");
 							 if(calculate_sha256_hash_from_ota(firmware_info.integrityHash) == FW_UPDATE_OK){
 								main_test_update_log("INIT FIRMWRARE HASH T5");
 								ESP_LOGI(TAG, "Initialize Firmware Update");
@@ -383,7 +382,11 @@ void main_app_process_response(const char *response, int len, firmware_metadata_
 void main_app_start_firmware_download(void){
 	main_test_update_log("INIT FIRMWARE IPFS DOWNLOAD T2");
 	strcpy((char*)url_string, HTTPS_IPFS_SERVER_URL);
-	strcat((char*)url_string, firmware_info.cid);
+	//strcat((char*)url_string, "QmeYizCjAByRsLYvqGXwP3Vu1mpUyipGD8DMV6DZedfTtP"); // Curto 128
+	//strcat((char*)url_string, "QmW3a4Vu3zkyeLAkMnUGe6ejkCXTmeTnhs9jQ5iTT584hE"); // Longo 128
+	//strcat((char*)url_string, "QmUzRXXm4VgHPc42NkJYo8fzQ4Dv6pRFkPkpfZugbFwhL4"); // Curto 256
+	strcat((char*)url_string, "QmYmXS2FE72kciXwf9qCVtgNvrH1nsx2aua4cGu1kSDNH8"); //longo 256
+	//strcat((char*)url_string, firmware_info.cid);
 	ESP_LOGI(TAG, "Firmware url: %s",url_string);
 	https_app_send_message(HTTPS_APP_MSG_DOWNLOAD_FW, url_string, NULL, 0, NULL);
 }
